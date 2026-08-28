@@ -1,6 +1,6 @@
-# Demo S11 — Playwright para QA
+# Trabajo Final Curso: Ruta de Transformación de QA Manual a QA Automation
 
-Proyecto educativo utilizado en la Ruta de Transformación de TesteandoYa para practicar automatización con Playwright.
+Proyecto Ruta de Transformación de TesteandoYa automatización con Playwright.
 
 ## Contenido
 
