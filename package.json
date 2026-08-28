@@ -1,0 +1,16 @@
+{
+  "name": "demo-s11",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:login": "playwright test tests/login.spec.ts",
+    "test:list": "playwright test tests/login.spec.ts --list --reporter=line",
+    "report": "playwright show-report",
+    "test:api": "playwright test tests/api/login-api.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.0"
+  }
+}
