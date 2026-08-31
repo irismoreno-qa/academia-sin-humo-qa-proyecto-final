@@ -1,0 +1,433 @@
+[
+  {
+    "tc_id": "TC-R01-001",
+    "req_ref": "REQ-R01",
+    "title": "Los cuatro campos vacíos bloquean el envío",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro sin sesión iniciada.",
+      "2. El aspirante deja Nombre, Email, Contraseña y Edad en blanco.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "", "email": "", "contrasena": "", "edad": "" },
+    "expected_result": "No se emite ninguna petición a POST /api/register (bloqueo del lado del cliente) y el formulario informa los cuatro campos obligatorios faltantes."
+  },
+  {
+    "tc_id": "TC-R01-002",
+    "req_ref": "REQ-R01",
+    "title": "Solo el nombre vacío, resto de campos válidos",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante deja Nombre en blanco y completa Email, Contraseña y Edad con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "No se emite petición a POST /api/register y se informa únicamente la obligatoriedad del nombre; ningún otro campo genera error."
+  },
+  {
+    "tc_id": "TC-R01-003",
+    "req_ref": "REQ-R01",
+    "title": "Solo el email vacío, resto de campos válidos",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante deja Email en blanco y completa Nombre, Contraseña y Edad con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "No se emite petición a POST /api/register y se informa únicamente la obligatoriedad del email; ningún otro campo genera error."
+  },
+  {
+    "tc_id": "TC-R01-004",
+    "req_ref": "REQ-R01",
+    "title": "Solo la contraseña vacía, resto de campos válidos",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante deja Contraseña en blanco y completa Nombre, Email y Edad con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "", "edad": "30" },
+    "expected_result": "No se emite petición a POST /api/register y se informa únicamente la obligatoriedad de la contraseña; ningún otro campo genera error."
+  },
+  {
+    "tc_id": "TC-R01-005",
+    "req_ref": "REQ-R01",
+    "title": "Solo la edad vacía, resto de campos válidos",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante deja Edad en blanco y completa Nombre, Email y Contraseña con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "" },
+    "expected_result": "No se emite petición a POST /api/register y se informa únicamente la obligatoriedad de la edad; ningún otro campo genera error."
+  },
+  {
+    "tc_id": "TC-R01-006",
+    "req_ref": "REQ-R01",
+    "title": "Los cuatro campos completos con valores válidos permiten el envío",
+    "type": "happy_path",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante completa los cuatro campos con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Se emite la petición POST /api/register y la respuesta es de éxito; no se informa obligatoriedad de ningún campo. Este caso es el control de los cinco anteriores: sin él, un formulario permanentemente roto los haría pasar a todos."
+  },
+  {
+    "tc_id": "TC-R01-007",
+    "req_ref": "REQ-R01",
+    "title": "Campo completado únicamente con espacios en blanco",
+    "type": "edge_case",
+    "steps": [
+      "1. El aspirante abre /registro con la pestaña Network abierta.",
+      "2. El aspirante escribe tres espacios en Nombre y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta y registra si hubo petición y con qué código respondió."
+    ],
+    "test_data": { "nombre": "   ", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Indeterminado por especificación. REQ-R01 exige que el campo no esté vacío y REQ-R02 exige entre 2 y 50 caracteres, pero ninguna de las dos define si los espacios en blanco cuentan como contenido. Este caso NO se marca PASA ni FALLA: se documenta el comportamiento real y se eleva como pregunta al responsable del producto. Si se aceptara, la academia terminaría con estudiantes sin nombre visible."
+  },
+
+  {
+    "tc_id": "TC-R02-001",
+    "req_ref": "REQ-R02",
+    "title": "Nombre por debajo del límite inferior: 1 carácter",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un nombre de 1 carácter y completa Email, Contraseña y Edad con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "L", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta; el formulario informa que el nombre debe tener entre 2 y 50 caracteres."
+  },
+  {
+    "tc_id": "TC-R02-002",
+    "req_ref": "REQ-R02",
+    "title": "Nombre en el límite inferior válido: 2 caracteres exactos",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un nombre de exactamente 2 caracteres, contados por herramienta y no a ojo, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Li", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito y la cuenta queda creada; el nombre no genera ningún error."
+  },
+  {
+    "tc_id": "TC-R02-003",
+    "req_ref": "REQ-R02",
+    "title": "Nombre en el límite superior válido: 50 caracteres exactos",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un nombre de exactamente 50 caracteres, contados por herramienta, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "<cadena de 50 caracteres exactos>", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito y la cuenta queda creada; el nombre no genera ningún error."
+  },
+  {
+    "tc_id": "TC-R02-004",
+    "req_ref": "REQ-R02",
+    "title": "Nombre por encima del límite superior: 51 caracteres",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un nombre de exactamente 51 caracteres, contados por herramienta, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta."
+    ],
+    "test_data": { "nombre": "<cadena de 51 caracteres exactos>", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta. El código de estado se verifica en Network: la pantalla por sí sola no alcanza como evidencia."
+  },
+
+  {
+    "tc_id": "TC-R03-001",
+    "req_ref": "REQ-R03",
+    "title": "Email válido con @ y dominio con punto",
+    "type": "happy_path",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un email con @ y dominio con punto, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}@gmail.com", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito; el email no genera ningún error de formato."
+  },
+  {
+    "tc_id": "TC-R03-002",
+    "req_ref": "REQ-R03",
+    "title": "Email sin arroba",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un email sin el carácter @ y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "irismoreno.gmail.com", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "El registro es rechazado por formato de email inválido y no se crea la cuenta."
+  },
+  {
+    "tc_id": "TC-R03-003",
+    "req_ref": "REQ-R03",
+    "title": "Email con arroba pero sin dominio",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un email que termina en @ y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "irismoreno@", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "El registro es rechazado por formato de email inválido y no se crea la cuenta."
+  },
+  {
+    "tc_id": "TC-R03-004",
+    "req_ref": "REQ-R03",
+    "title": "Email con dominio sin punto",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un email con @ y un dominio que no contiene punto, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "irismoreno@gmail", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta. REQ-R03 exige un dominio con punto y 'gmail' no lo tiene. Es la mitad de la regla que más probablemente quede sin implementar: verificar el código de estado real, no el mensaje."
+  },
+  {
+    "tc_id": "TC-R03-005",
+    "req_ref": "REQ-R03",
+    "title": "Email con dominio de primer nivel atípico pero sintácticamente válido",
+    "type": "edge_case",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe un email cuyo dominio tiene punto pero un TLD poco habitual, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "irismoreno@gmail.con", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito. REQ-R03 exige un @ y un dominio con punto; no exige un TLD de una lista. Aunque parezca un error de tipeo, aceptarlo es el comportamiento correcto según la regla escrita. Se documenta como caso límite de interpretación, no como bug."
+  },
+
+  {
+    "tc_id": "TC-R04-001",
+    "req_ref": "REQ-R04",
+    "title": "Contraseña por debajo del límite inferior: 7 caracteres",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe una contraseña de exactamente 7 caracteres, contados por herramienta, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave12", "edad": "30" },
+    "expected_result": "El registro es rechazado por contraseña demasiado corta y no se crea la cuenta."
+  },
+  {
+    "tc_id": "TC-R04-002",
+    "req_ref": "REQ-R04",
+    "title": "Contraseña en el límite inferior válido: 8 caracteres exactos",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe una contraseña de exactamente 8 caracteres, contados por herramienta, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave123", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito y la cuenta queda creada; la contraseña no genera ningún error."
+  },
+  {
+    "tc_id": "TC-R04-003",
+    "req_ref": "REQ-R04",
+    "title": "Contraseña en el límite superior válido: 64 caracteres exactos",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe una contraseña de exactamente 64 caracteres, generada y contada por herramienta, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "<cadena de 64 caracteres exactos>", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito y la cuenta queda creada. Junto con TC-R04-004 delimita el borde exacto: 64 entra, 65 no."
+  },
+  {
+    "tc_id": "TC-R04-004",
+    "req_ref": "REQ-R04",
+    "title": "Contraseña por encima del límite superior: 65 caracteres",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe una contraseña de exactamente 65 caracteres, generada y contada por herramienta, y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta.",
+      "4. El aspirante registra el código de estado de la respuesta antes de mirar la pantalla."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "<cadena de 65 caracteres exactos>", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta. El paso 4 es obligatorio y no negociable: este es el requisito donde ya se observó que la pantalla puede contradecir a la API, y firmar este caso leyendo el mensaje visible lo invalida."
+  },
+
+  {
+    "tc_id": "TC-R05-001",
+    "req_ref": "REQ-R05",
+    "title": "Edad por debajo del límite inferior: 15 años",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe 15 en Edad y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "15" },
+    "expected_result": "El registro es rechazado por edad menor a la mínima y no se crea la cuenta."
+  },
+  {
+    "tc_id": "TC-R05-002",
+    "req_ref": "REQ-R05",
+    "title": "Edad en el límite inferior válido: 16 años exactos",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe 16 en Edad y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "16" },
+    "expected_result": "POST /api/register responde con un código de éxito y la cuenta queda creada; la edad no genera ningún error."
+  },
+  {
+    "tc_id": "TC-R05-003",
+    "req_ref": "REQ-R05",
+    "title": "Edad en el límite superior válido: 99 años exactos",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe 99 en Edad y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "99" },
+    "expected_result": "POST /api/register responde con un código de éxito y la cuenta queda creada; la edad no genera ningún error."
+  },
+  {
+    "tc_id": "TC-R05-004",
+    "req_ref": "REQ-R05",
+    "title": "Edad por encima del límite superior: 100 años",
+    "type": "boundary",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante escribe 100 en Edad y completa el resto con valores válidos centrales.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "100" },
+    "expected_result": "El registro es rechazado por edad mayor a la máxima y no se crea la cuenta."
+  },
+
+  {
+    "tc_id": "TC-R06-001",
+    "req_ref": "REQ-R06",
+    "title": "El formulario queda vacío tras un registro exitoso confirmado por la API",
+    "type": "happy_path",
+    "steps": [
+      "1. El aspirante abre /registro con la pestaña Network abierta.",
+      "2. El aspirante completa los cuatro campos con valores válidos centrales y un email no usado.",
+      "3. El aspirante hace clic en Crear cuenta.",
+      "4. El aspirante confirma en Network que POST /api/register respondió con éxito.",
+      "5. El aspirante observa los cuatro campos del formulario."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Los cuatro campos quedan completamente vacíos. El paso 4 es previo al 5 por diseño: sin éxito confirmado por la API, REQ-R06 no aplica y el caso no puede evaluarse."
+  },
+  {
+    "tc_id": "TC-R06-002",
+    "req_ref": "REQ-R06",
+    "title": "El formulario conserva los datos tras un registro rechazado",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro con la pestaña Network abierta.",
+      "2. El aspirante completa los campos con una edad fuera de rango y el resto válido.",
+      "3. El aspirante hace clic en Crear cuenta.",
+      "4. El aspirante confirma en Network que el registro fue rechazado.",
+      "5. El aspirante observa los cuatro campos del formulario."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "100" },
+    "expected_result": "Los campos conservan lo que el aspirante escribió. REQ-R06 condiciona la limpieza a un registro exitoso: limpiar tras un rechazo obligaría a reescribir todo y sería un defecto de usabilidad, además de una violación de la regla."
+  },
+  {
+    "tc_id": "TC-R06-003",
+    "req_ref": "REQ-R06",
+    "title": "Dos registros exitosos consecutivos sin arrastre de datos",
+    "type": "edge_case",
+    "steps": [
+      "1. El aspirante completa un registro exitoso confirmado por la API.",
+      "2. Sin recargar la página, el aspirante completa un segundo registro con un email distinto y no usado.",
+      "3. El aspirante confirma en Network que el segundo registro también respondió con éxito.",
+      "4. El aspirante observa los cuatro campos."
+    ],
+    "test_data": { "primer_email": "{EMAIL_UNICO_1}", "segundo_email": "{EMAIL_UNICO_2}", "nombre": "Iris Moreno", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Los cuatro campos quedan vacíos tras el segundo registro y ningún campo conserva datos del primero. Cubre la segunda oración de REQ-R06, que un solo registro aislado no puede verificar."
+  },
+
+  {
+    "tc_id": "TC-R07-001",
+    "req_ref": "REQ-R07",
+    "title": "Un email no registrado previamente es aceptado",
+    "type": "happy_path",
+    "steps": [
+      "1. El aspirante abre /registro.",
+      "2. El aspirante completa los cuatro campos con un email que no fue usado antes.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "POST /api/register responde con un código de éxito. Es el control de TC-R07-002: sin él, un rechazo generalizado del formulario se leería como cumplimiento de REQ-R07."
+  },
+  {
+    "tc_id": "TC-R07-002",
+    "req_ref": "REQ-R07",
+    "title": "Un email ya registrado es rechazado",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante ejecuta TC-R07-001 y registra un email con éxito confirmado por la API.",
+      "2. El aspirante vuelve a /registro y completa el formulario con el mismo email, cambiando nombre, contraseña y edad por otros valores válidos.",
+      "3. El aspirante hace clic en Crear cuenta."
+    ],
+    "test_data": { "nombre": "Ana Gómez", "email": "<el mismo email de TC-R07-001>", "contrasena": "OtraClave99", "edad": "42" },
+    "expected_result": "POST /api/register responde con un código de rechazo por email duplicado y no se crea una segunda cuenta. Depende de TC-R07-001 por diseño; la dependencia está declarada, no escondida."
+  },
+  {
+    "tc_id": "TC-R07-003",
+    "req_ref": "REQ-R07",
+    "title": "El mismo email con distinta capitalización",
+    "type": "edge_case",
+    "steps": [
+      "1. El aspirante registra un email en minúsculas con éxito confirmado por la API.",
+      "2. El aspirante vuelve a /registro e intenta registrar el mismo email con mayúsculas en la parte local y el dominio.",
+      "3. El aspirante hace clic en Crear cuenta y registra el código de estado."
+    ],
+    "test_data": { "primer_email": "{EMAIL_UNICO}", "segundo_email": "<el mismo email con mayúsculas>", "nombre": "Iris Moreno", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Indeterminado por especificación. REQ-R07 dice 'un email que ya existe' pero no define si la comparación distingue mayúsculas de minúsculas. Este caso NO se marca PASA ni FALLA: se documenta el comportamiento real observado y se eleva como pregunta al responsable del producto. Reportarlo como bug sin una regla que lo respalde sería inventar el resultado esperado."
+  },
+
+  {
+    "tc_id": "TC-R08-001",
+    "req_ref": "REQ-R08",
+    "title": "Un rechazo de la API no se muestra como éxito en pantalla",
+    "type": "negative",
+    "steps": [
+      "1. El aspirante abre /registro con la pestaña Network abierta.",
+      "2. El aspirante envía un registro que la API debe rechazar según REQ-R04, con contraseña de 65 caracteres.",
+      "3. El aspirante anota el código de estado de POST /api/register.",
+      "4. El aspirante anota el mensaje que muestra la pantalla."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "<cadena de 65 caracteres exactos>", "edad": "30" },
+    "expected_result": "Si la API respondió con un código de error, la pantalla no muestra el mensaje de éxito. Se comparan los pasos 3 y 4: cualquier divergencia entre ellos es el defecto que este caso busca. Comparte ejecución con TC-R04-004 pero asevera otra cosa: aquel verifica que el rechazo ocurra, este verifica que el aspirante se entere."
+  },
+  {
+    "tc_id": "TC-R08-002",
+    "req_ref": "REQ-R08",
+    "title": "Una aceptación de la API se muestra como éxito en pantalla",
+    "type": "happy_path",
+    "steps": [
+      "1. El aspirante abre /registro con la pestaña Network abierta.",
+      "2. El aspirante envía un registro válido con un email no usado.",
+      "3. El aspirante anota el código de estado de POST /api/register.",
+      "4. El aspirante anota el mensaje que muestra la pantalla."
+    ],
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Si la API respondió con un código de éxito, la pantalla muestra el mensaje de éxito. Es el control de TC-R08-001: una pantalla que nunca muestra éxito también sería coherente con aquel caso, y estaría igual de rota."
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "domain": "Educación — plataforma de cursos online con inscripción, prerequisitos y certificación",
+  "system": "Academia sin Humo",
+  "feature": "Registro de estudiantes (/registro)",
+  "platform": "Web",
+  "actors": ["Aspirante — persona no registrada que completa el formulario", "Estudiante — resultado de un registro exitoso"],
+  "business_rules": [
+    "El formulario requiere: nombre completo, email, contraseña y edad. Todos los campos son obligatorios.",
+    "El nombre debe tener entre 2 y 50 caracteres.",
+    "El email debe tener formato válido: debe contener un @ seguido de un dominio con punto (ejemplo: usuario@dominio.com).",
+    "La contraseña debe tener entre 8 y 64 caracteres (inclusive). Una contraseña de 7 caracteres debe ser rechazada. Una de 65 también.",
+    "La edad debe estar entre 16 y 99 (inclusive).",
+    "Tras un registro exitoso, el formulario debe limpiarse completamente. Ningún campo debe conservar datos del registro anterior.",
+    "No se puede registrar un email que ya existe en el sistema."
+  ],
+  "summary": "El formulario de /registro da de alta a un aspirante como estudiante de la academia. Valida cuatro campos obligatorios (nombre, email, contraseña y edad) contra rangos y formatos explícitos, rechaza emails ya existentes y debe limpiarse por completo tras un alta exitosa. Es la única puerta de entrada al sistema: sin registro no hay login, ni inscripción a cursos, ni progreso."
+}

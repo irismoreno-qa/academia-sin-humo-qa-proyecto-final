@@ -97,17 +97,25 @@ y cuál sería el orden de ampliación si el alcance creciera:
 | **R03** | Email con `@` **y** dominio con punto | Partición de equivalencia | Válidos: `a@b.com`, `a@b.co` · Inválidos: `usuario` (sin `@`), `usuario@` (sin dominio), `usuario@dominio` (dominio sin punto) | Respuesta de la API | **Alto** — regla con dos condiciones acopladas; implementar solo una es el error más probable |
 | **R04** | Contraseña entre 8 y 64 (inclusive) | Valores límite | 7, 8, 64, 65 | **API obligatorio** | **Crítico** — es el requisito donde ya se observó divergencia UI/API |
 | **R05** | Edad entre 16 y 99 (inclusive) | Valores límite | 15, 16, 99, 100 | Respuesta de la API | Alto |
-| **R06** | El formulario se limpia tras un registro exitoso | Verificación de post-condición | 1 registro válido → los 4 campos vacíos | UI, **después** de confirmar el éxito real por API | Alto — afecta al siguiente registro |
+| **R06** | El formulario se limpia tras un registro exitoso | Verificación de post-condición | 1 registro válido → los 4 campos vacíos, y sin arrastre entre dos registros consecutivos | UI, **después** de confirmar el éxito real por API | Alto — afecta al siguiente registro |
 | **R07** | No se admite un email ya existente | Partición de equivalencia | Email registrado en la misma corrida, reenviado | Respuesta de la API | Alto |
+| **R08** *(derivado)* | El resultado informado en pantalla coincide con el resultado real del registro | Consistencia entre capas | Un rechazo de la API y una aceptación de la API, comparando ambas contra lo que muestra la pantalla | Respuesta de la API **contra** mensaje visible | **Crítico** — es el defecto que invalidó el intento anterior |
 
 **Total mínimo: 24 casos**, todos con una sola variable bajo prueba.
 Dos técnicas de diseño aplicadas y trazadas: **valores límite** (R02, R04, R05) y
 **partición de equivalencia** (R01, R03, R07), más una verificación de
-post-condición (R06).
+post-condición (R06) y una de consistencia entre capas (R08).
+
+**Diseño final: 32 casos** sobre 8 requisitos, en [`docs/qa/`](qa/test-plan.md). Los
+8 que superan el mínimo son controles positivos —los bordes válidos y los caminos
+felices, sin los cuales una validación excesivamente estricta se leería como
+cumplimiento—, los dos casos de REQ-R08 y dos ambigüedades de especificación que se
+documentan como preguntas abiertas, no como defectos.
 
 **Orden de ejecución:** R01 primero (no necesita datos previos ni llega a la API),
 después R02–R05 (una variable cada uno), R06 al final del bloque de camino feliz, y
-R07 último porque **depende** de que R06 haya registrado un email real.
+R07 último porque **depende** de que R06 haya registrado un email real. R08 se
+observa durante los casos de R01 y R04, sin ejecuciones adicionales.
 
 ---
 
@@ -115,8 +123,10 @@ R07 último porque **depende** de que R06 haya registrado un email real.
 
 ### Lo que SÍ entra
 
-1. **Diseño de los 24 casos** de REQ-R01 a R07 con la regla de aislamiento, cada uno
-   trazado a su requisito y a su técnica de diseño.
+1. **Diseño de los casos** de REQ-R01 a R08 con la regla de aislamiento, cada uno
+   trazado a su requisito y a su técnica de diseño. Producido con el sistema de
+   5 estaciones en [`docs/qa/`](qa/): contexto, requerimientos, casos, escenarios
+   BDD, plan de prueba y matriz de trazabilidad.
 2. **Ejecución manual con evidencia auditable** — captura de Network por caso, según
    la regla de evidencia de la sección 0.
 3. **Automatización UI E2E con Page Object** del set completo, afirmando sobre la

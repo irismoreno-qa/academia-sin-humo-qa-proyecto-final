@@ -1,0 +1,96 @@
+[
+  {
+    "id": "REQ-R01",
+    "title": "Los cuatro campos del formulario son obligatorios",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "El formulario debe pedir nombre completo, email, contraseña y edad.",
+      "Cuando cualquiera de los cuatro campos esté vacío al enviar, entonces el sistema debe impedir el alta e informar cuál falta.",
+      "Cuando los cuatro campos estén vacíos al enviar, entonces el sistema debe informar los cuatro faltantes."
+    ]
+  },
+  {
+    "id": "REQ-R02",
+    "title": "El nombre debe tener entre 2 y 50 caracteres",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "Cuando el nombre tenga menos de 2 caracteres, entonces el registro debe ser rechazado.",
+      "Cuando el nombre tenga más de 50 caracteres, entonces el registro debe ser rechazado.",
+      "Cuando el nombre tenga entre 2 y 50 caracteres inclusive, entonces el nombre no debe ser motivo de rechazo."
+    ]
+  },
+  {
+    "id": "REQ-R03",
+    "title": "El email debe contener un @ seguido de un dominio con punto",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "Cuando el email no contenga un @, entonces el registro debe ser rechazado.",
+      "Cuando el email no tenga dominio después del @, entonces el registro debe ser rechazado.",
+      "Cuando el dominio del email no contenga un punto, entonces el registro debe ser rechazado.",
+      "Cuando el email contenga un @ y un dominio con punto, entonces el email no debe ser motivo de rechazo."
+    ]
+  },
+  {
+    "id": "REQ-R04",
+    "title": "La contraseña debe tener entre 8 y 64 caracteres inclusive",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "Cuando la contraseña tenga 7 caracteres, entonces el registro debe ser rechazado.",
+      "Cuando la contraseña tenga 65 caracteres, entonces el registro debe ser rechazado.",
+      "Cuando la contraseña tenga entre 8 y 64 caracteres inclusive, entonces la contraseña no debe ser motivo de rechazo."
+    ]
+  },
+  {
+    "id": "REQ-R05",
+    "title": "La edad debe estar entre 16 y 99 inclusive",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "Cuando la edad sea menor a 16, entonces el registro debe ser rechazado.",
+      "Cuando la edad sea mayor a 99, entonces el registro debe ser rechazado.",
+      "Cuando la edad esté entre 16 y 99 inclusive, entonces la edad no debe ser motivo de rechazo."
+    ]
+  },
+  {
+    "id": "REQ-R06",
+    "title": "El formulario se limpia por completo tras un registro exitoso",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "Cuando un registro sea exitoso, entonces los cuatro campos deben quedar vacíos.",
+      "Cuando se abra el formulario después de un registro exitoso, entonces ningún campo debe conservar datos del registro anterior."
+    ]
+  },
+  {
+    "id": "REQ-R07",
+    "title": "No se puede registrar un email que ya existe en el sistema",
+    "type": "functional",
+    "priority": "high",
+    "source": "explícito — /documentacion sección 1",
+    "acceptance_criteria": [
+      "Cuando el email enviado ya esté registrado, entonces el registro debe ser rechazado.",
+      "Cuando el email enviado no esté registrado y el resto de los campos sea válido, entonces el registro debe ser aceptado."
+    ]
+  },
+  {
+    "id": "REQ-R08",
+    "title": "El resultado informado en la interfaz debe coincidir con el resultado real del registro",
+    "type": "functional",
+    "priority": "high",
+    "source": "implícito — derivado de REQ-R01 a REQ-R07. Las siete reglas obligan a rechazar entradas inválidas; un rechazo que el aspirante no percibe equivale, desde su punto de vista, a no haber sido rechazado. Además REQ-R06 presupone que el sistema distingue un registro exitoso de uno fallido, porque solo en el primero limpia el formulario.",
+    "acceptance_criteria": [
+      "Cuando POST /api/register responda con un código de error, entonces la interfaz no debe mostrar el mensaje de éxito.",
+      "Cuando POST /api/register responda con un código de éxito, entonces la interfaz debe mostrar el mensaje de éxito."
+    ]
+  }
+]
