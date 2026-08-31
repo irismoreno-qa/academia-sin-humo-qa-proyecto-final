@@ -84,6 +84,70 @@ mezclarlos es exactamente lo que permite firmar como verificado algo que no lo e
 
 ---
 
+## Matriz de trazabilidad de resultados
+
+Las columnas **API** y **UI** son los dos niveles del oráculo, separados a propósito:
+
+| Columna | Qué responde |
+|---|---|
+| **API** | ¿`POST /api/register` respondió como exige la especificación? — *nivel 1, el que decide* |
+| **UI** | ¿La pantalla reflejó esa respuesta? — *nivel 2, se verifica además* |
+| **Resultado** | El veredicto del caso: `PASS` solo si ambos niveles lo son |
+| **Hallazgo** | `H-0X` de la [bitácora](docs/qa/bitacora-de-hallazgos.md), cuando hubo algo que registrar |
+
+Separarlas no es burocracia. **Una fila con `API: PASS` y `UI: FAIL` es exactamente
+el defecto de REQ-R08** —el backend rechazó, la pantalla dijo que todo salió bien— y
+en esta tabla se ve sin leer una línea de texto. Una sola columna de resultado lo
+escondería.
+
+Estados: `PASS` · `FAIL` · `BLOQUEADO` · `SIN VERIFICAR` (ejecutado pero sin código
+de estado citable) · `—` (no ejecutado todavía).
+
+| Requisito | Test | API | UI | Resultado | Hallazgo |
+|---|---|:--:|:--:|:--:|---|
+| **REQ-R01** | `TC-R01-001` · Los cuatro campos vacíos bloquean el envío | — | — | — | — |
+|  | `TC-R01-002` · Solo el nombre vacío, resto de campos válidos | — | — | — | — |
+|  | `TC-R01-003` · Solo el email vacío, resto de campos válidos | — | — | — | — |
+|  | `TC-R01-004` · Solo la contraseña vacía, resto de campos válidos | — | — | — | — |
+|  | `TC-R01-005` · Solo la edad vacía, resto de campos válidos | — | — | — | — |
+|  | `TC-R01-006` · Los cuatro campos completos con valores válidos permiten el envío | — | — | — | — |
+|  | `TC-R01-007` · Campo completado únicamente con espacios en blanco | — | — | — | — |
+| **REQ-R02** | `TC-R02-001` · Nombre por debajo del límite inferior: 1 carácter | — | — | — | — |
+|  | `TC-R02-002` · Nombre en el límite inferior válido: 2 caracteres exactos | — | — | — | — |
+|  | `TC-R02-003` · Nombre en el límite superior válido: 50 caracteres exactos | — | — | — | — |
+|  | `TC-R02-004` · Nombre por encima del límite superior: 51 caracteres | — | — | — | — |
+| **REQ-R03** | `TC-R03-001` · Email válido con @ y dominio con punto | — | — | — | — |
+|  | `TC-R03-002` · Email sin arroba | — | — | — | — |
+|  | `TC-R03-003` · Email con arroba pero sin dominio | — | — | — | — |
+|  | `TC-R03-004` · Email con dominio sin punto | — | — | — | — |
+|  | `TC-R03-005` · Email con dominio de primer nivel atípico pero sintácticamente válido | — | — | — | — |
+| **REQ-R04** | `TC-R04-001` · Contraseña por debajo del límite inferior: 7 caracteres | — | — | — | — |
+|  | `TC-R04-002` · Contraseña en el límite inferior válido: 8 caracteres exactos | — | — | — | — |
+|  | `TC-R04-003` · Contraseña en el límite superior válido: 64 caracteres exactos | — | — | — | — |
+|  | `TC-R04-004` · Contraseña por encima del límite superior: 65 caracteres | — | — | — | — |
+| **REQ-R05** | `TC-R05-001` · Edad por debajo del límite inferior: 15 años | — | — | — | — |
+|  | `TC-R05-002` · Edad en el límite inferior válido: 16 años exactos | — | — | — | — |
+|  | `TC-R05-003` · Edad en el límite superior válido: 99 años exactos | — | — | — | — |
+|  | `TC-R05-004` · Edad por encima del límite superior: 100 años | — | — | — | — |
+| **REQ-R06** | `TC-R06-001` · El formulario queda vacío tras un registro exitoso confirmado por la API | — | — | — | — |
+|  | `TC-R06-002` · El formulario conserva los datos tras un registro rechazado | — | — | — | — |
+|  | `TC-R06-003` · Dos registros exitosos consecutivos sin arrastre de datos | — | — | — | — |
+| **REQ-R07** | `TC-R07-001` · Un email no registrado previamente es aceptado | — | — | — | — |
+|  | `TC-R07-002` · Un email ya registrado es rechazado | — | — | — | — |
+|  | `TC-R07-003` · El mismo email con distinta capitalización | — | — | — | — |
+| **REQ-R08** | `TC-R08-001` · Un rechazo de la API no se muestra como éxito en pantalla | — | — | — | — |
+|  | `TC-R08-002` · Una aceptación de la API se muestra como éxito en pantalla | — | — | — | — |
+
+**Cómo se llena.** No a mano al final: fila por fila, a medida que cada caso se
+ejecuta, siguiendo el [workflow de hallazgos](docs/qa/workflow-hallazgos.md). Cuando
+un test automatizado falla, la skill
+[`analizar-fallo`](.agents/skills/analizar-fallo/SKILL.md) traza el caso a su
+requisito, registra esperado contra observado, guarda la evidencia y **propone** una
+acción — pero la decisión la toma la QA, y nunca se modifica la expectativa del test
+para que pase.
+
+---
+
 ## Artefactos
 
 | Archivo | Contenido |
@@ -127,7 +191,7 @@ no la herramienta.**
 
 | Componente | Qué hace |
 |---|---|
-| [`.agents/skills/`](.agents/skills) | 7 skills de alcance acotado: generar y verificar Page Objects, construir y verificar proyecto de API, integración UI+API, y generación del workflow de CI. Cada una exige inventario y aprobación humana antes de escribir archivos |
+| [`.agents/skills/`](.agents/skills) | 8 skills de alcance acotado: generar y verificar Page Objects, construir y verificar proyecto de API, integración UI+API, generación del workflow de CI, y [`analizar-fallo`](.agents/skills/analizar-fallo/SKILL.md) para el análisis de tests en rojo. Cada una exige inventario y aprobación humana antes de escribir archivos |
 | [`.agents/workflows/`](.agents/workflows) | 3 workflows de agente con sus contratos de entrada, salida y condiciones de parada |
 | [`reports/`](reports) | Reportes de verificación de las ejecuciones de agente, con rúbrica y puntaje |
 | [`evidence/`](evidence) | Evidencia HTML del formulario bajo prueba, usada como fuente para los locators |

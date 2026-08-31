@@ -49,6 +49,32 @@ interacción real de usuario. Se adjunta captura de la pestaña Network o export
 No se aceptan resultados obtenidos disparando eventos de forma sintética ni
 ejecutados por una herramienta que no deje rastro auditable.
 
+### Regla de preservación del fallo
+
+> **Nunca se modifica la expectativa de un test solo para que pase.** Si el
+> comportamiento observado contradice el requisito, se preserva el fallo, se
+> documenta el hallazgo y se hace análisis de causa raíz antes de tocar el test.
+
+Es la regla de oráculo aplicada a la fase de automatización. En el diseño se prohíbe
+que el mensaje de la aplicación defina el resultado esperado; en la automatización se
+prohíbe que **el fallo** lo defina. Son la misma prohibición: el sistema bajo prueba
+no puede ser, en ningún momento, la fuente de su propio criterio de aprobación.
+
+**Ninguna causa se supone.** Un test en rojo puede ser un defecto de la aplicación,
+de la automatización, de los datos de prueba, del ambiente o del requisito. Se
+evalúan las cinco y se clasifica sobre evidencia; **no hay clasificación por
+defecto**. Suponer que todo fallo es un defecto del producto infla el reporte y quema
+la credibilidad de quien lo firma; suponer que todo fallo es culpa del test convierte
+defectos reales en falsos verdes. Son la misma pereza en direcciones opuestas.
+
+La protección contra el falso verde no vive en sesgar el juicio, sino en separarlo de
+la acción: **ningún test se modifica sin autorización humana, sea cual sea la
+clasificación.**
+
+El procedimiento operativo está en
+[`docs/qa/workflow-hallazgos.md`](qa/workflow-hallazgos.md) y la skill que lo aplica
+en [`.agents/skills/analizar-fallo/`](../.agents/skills/analizar-fallo/SKILL.md).
+
 ---
 
 ## 1. Riesgo principal
