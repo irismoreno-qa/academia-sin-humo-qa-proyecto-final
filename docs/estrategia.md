@@ -67,6 +67,53 @@ edades imposibles).
 y no exige que coincidan salvo implícitamente. **Ahí es donde este producto ya
 demostró romperse**, y ahí se concentra el diseño de casos.
 
+### Riesgo cuantificado por requisito
+
+El riesgo no es una etiqueta ni una intuición: es el producto de dos dimensiones
+puntuadas por separado. **Impacto** (1 despreciable → 5 catastrófico) × **Probabilidad**
+(1 raro → 5 casi seguro). La probabilidad se ancla en evidencia observada o en
+propiedades estructurales de la regla, nunca en corazonada.
+
+| REQ | Impacto | Por qué ese impacto | Prob. | Por qué esa probabilidad | Score | Banda |
+|---|:--:|---|:--:|---|:--:|---|
+| **R08** · coherencia UI/API | 5 | Se le informa al aspirante que tiene cuenta cuando no la tiene. Es el único caso en que **no tiene forma de enterarse** de que algo falló: no reintenta, se pierde | 5 | Observado directamente: pantalla de éxito con `422` de la API | **25** | **CRÍTICO** |
+| **R03** · formato de email | 4 | Cuenta a la que nunca llega un correo. Irrecuperable sin soporte | 5 | Dos condiciones acopladas (`@` **y** punto en el dominio). Se observó un dominio sin punto aceptado con `201` | **20** | **CRÍTICO** |
+| **R06** · limpieza del formulario | 3 | Riesgo de registro duplicado accidental; en una máquina compartida, el siguiente aspirante ve nombre y email del anterior | 5 | Observado fallando de forma repetida, incluso tras registros confirmados genuinos por la API. Las post-condiciones son las reglas que más se omiten | **15** | **CRÍTICO** |
+| **R02** · nombre 2–50 | 3 | Nombres de 1 o de 200 caracteres en los registros. Daño de calidad de dato; el nombre se imprime en el certificado | 4 | Dos bordes, doble implementación cliente/servidor, y el borde superior nunca fue verificado | **12** | ALTO |
+| **R04** · contraseña 8–64 | 4 | Contraseña rechazada con pantalla de éxito: el estudiante no puede entrar y no sabe por qué. Pérdida silenciosa de acceso | 3 | Dos bordes y doble implementación, pero la observación disponible indica que el servidor **sí** aplicó el límite. Lo que falló fue el reporte, y eso pertenece a R08 | **12** | ALTO |
+| **R05** · edad 16–99 | 4 | Menores registrados en la academia. Tiene arista legal | 3 | Dos bordes, doble implementación, campo numérico estándar. Sin señal adversa observada | **12** | ALTO |
+| **R07** · email duplicado | 4 | Cuentas duplicadas rompen la identidad: dos estudiantes con un email, y el sistema no los distingue para login, progreso ni certificados | 2 | Condición única. La unicidad suele aplicarse con restricción en base de datos. Se observó funcionando | **8** | MEDIO |
+| **R01** · campos obligatorios | 2 | El aspirante ve el error y reintenta | 2 | Una condición por campo (no vacío), la validación más estándar que existe, y bloquea del lado del cliente | **4** | BAJO |
+
+Bandas: **CRÍTICO** 15–25 · **ALTO** 10–14 · **MEDIO** 5–9 · **BAJO** 1–4
+
+### Cobertura frente a riesgo: una desproporción aceptada
+
+Cruzar el score contra la cantidad de casos asignados muestra que, en los extremos,
+la distribución no es proporcional al riesgo:
+
+| REQ | Score | Casos | |
+|---|:--:|:--:|---|
+| R08 | 25 | 2 | el riesgo más alto, la menor cobertura |
+| R03 | 20 | 5 | proporcional |
+| R06 | 15 | 3 | proporcional |
+| R02 · R04 · R05 | 12 | 4 c/u | proporcional |
+| R07 | 8 | 3 | proporcional |
+| R01 | 4 | 7 | el riesgo más bajo, la mayor cobertura |
+
+Se acepta la desproporción, con motivo en cada extremo:
+
+- **R01 con 7 casos.** El riesgo es bajo pero el costo también: no llegan a la API,
+  no consumen emails y corren de inmediato. La regla de aislamiento exige un caso por
+  campo, y quitarlos ahorraría minutos sin reducir riesgo real.
+- **R08 con 2 casos.** Sus dos casos cubren las dos direcciones de la regla —la API
+  rechaza y la pantalla no miente; la API acepta y la pantalla lo informa— y no
+  requieren ejecuciones adicionales: se observan durante `TC-R04-004` y `TC-R01-006`.
+  La regla queda cubierta en su lógica completa, no por volumen.
+
+Queda declarado como decisión y no como accidente: sin puntuar el riesgo, esta
+desproporción no se ve.
+
 ---
 
 ## 2. Contexto del producto: lo que queda fuera del proyecto
@@ -90,16 +137,19 @@ y cuál sería el orden de ampliación si el alcance creciera:
 
 ## 3. Análisis de los requisitos en alcance
 
+La columna de riesgo toma su valor de la matriz cuantificada de la sección 1; el
+razonamiento de cada puntuación vive allí y no se repite acá.
+
 | REQ | Regla | Técnica de diseño | Clases / valores a cubrir | Oráculo | Riesgo |
 |---|---|---|---|---|---|
-| **R01** | 4 campos obligatorios | Partición de equivalencia | Cada campo vacío **aislado** (4 casos) + los 4 vacíos a la vez (1) | Ausencia de petición a la API + mensaje visible | Medio |
-| **R02** | Nombre entre 2 y 50 caracteres | Valores límite | 1, 2, 50, 51 | Respuesta de la API | **Alto** — el límite superior es donde el cliente suele no validar |
-| **R03** | Email con `@` **y** dominio con punto | Partición de equivalencia | Válidos: `a@b.com`, `a@b.co` · Inválidos: `usuario` (sin `@`), `usuario@` (sin dominio), `usuario@dominio` (dominio sin punto) | Respuesta de la API | **Alto** — regla con dos condiciones acopladas; implementar solo una es el error más probable |
-| **R04** | Contraseña entre 8 y 64 (inclusive) | Valores límite | 7, 8, 64, 65 | **API obligatorio** | **Crítico** — es el requisito donde ya se observó divergencia UI/API |
-| **R05** | Edad entre 16 y 99 (inclusive) | Valores límite | 15, 16, 99, 100 | Respuesta de la API | Alto |
-| **R06** | El formulario se limpia tras un registro exitoso | Verificación de post-condición | 1 registro válido → los 4 campos vacíos, y sin arrastre entre dos registros consecutivos | UI, **después** de confirmar el éxito real por API | Alto — afecta al siguiente registro |
-| **R07** | No se admite un email ya existente | Partición de equivalencia | Email registrado en la misma corrida, reenviado | Respuesta de la API | Alto |
-| **R08** *(derivado)* | El resultado informado en pantalla coincide con el resultado real del registro | Consistencia entre capas | Un rechazo de la API y una aceptación de la API, comparando ambas contra lo que muestra la pantalla | Respuesta de la API **contra** mensaje visible | **Crítico** — es el defecto que invalidó el intento anterior |
+| **R01** | 4 campos obligatorios | Partición de equivalencia | Cada campo vacío **aislado** (4 casos) + los 4 vacíos a la vez (1) | Ausencia de petición a la API + mensaje visible | BAJO · 4 |
+| **R02** | Nombre entre 2 y 50 caracteres | Valores límite | 1, 2, 50, 51 | Respuesta de la API | ALTO · 12 |
+| **R03** | Email con `@` **y** dominio con punto | Partición de equivalencia | Válidos: `a@b.com`, `a@b.co` · Inválidos: `usuario` (sin `@`), `usuario@` (sin dominio), `usuario@dominio` (dominio sin punto) | Respuesta de la API | **CRÍTICO · 20** |
+| **R04** | Contraseña entre 8 y 64 (inclusive) | Valores límite | 7, 8, 64, 65 | **API obligatorio** | ALTO · 12 |
+| **R05** | Edad entre 16 y 99 (inclusive) | Valores límite | 15, 16, 99, 100 | Respuesta de la API | ALTO · 12 |
+| **R06** | El formulario se limpia tras un registro exitoso | Verificación de post-condición | 1 registro válido → los 4 campos vacíos, y sin arrastre entre dos registros consecutivos | UI, **después** de confirmar el éxito real por API | **CRÍTICO · 15** |
+| **R07** | No se admite un email ya existente | Partición de equivalencia | Email registrado en la misma corrida, reenviado | Respuesta de la API | MEDIO · 8 |
+| **R08** *(derivado)* | El resultado informado en pantalla coincide con el resultado real del registro | Consistencia entre capas | Un rechazo de la API y una aceptación de la API, comparando ambas contra lo que muestra la pantalla | Respuesta de la API **contra** mensaje visible | **CRÍTICO · 25** |
 
 **Total mínimo: 24 casos**, todos con una sola variable bajo prueba.
 Dos técnicas de diseño aplicadas y trazadas: **valores límite** (R02, R04, R05) y
@@ -129,8 +179,19 @@ observa durante los casos de R01 y R04, sin ejecuciones adicionales.
    BDD, plan de prueba y matriz de trazabilidad.
 2. **Ejecución manual con evidencia auditable** — captura de Network por caso, según
    la regla de evidencia de la sección 0.
-3. **Automatización UI E2E con Page Object** del set completo, afirmando sobre la
-   respuesta de `POST /api/register` antes que sobre la pantalla.
+3. **Automatización UI E2E con Page Object de 30 de los 32 casos**, afirmando sobre
+   la respuesta de `POST /api/register` antes que sobre la pantalla.
+
+   Se excluyen `TC-R01-007` y `TC-R07-003`, los dos casos indeterminados por
+   especificación. Un test automatizado necesita un resultado esperado contra el
+   cual afirmar, y estos dos no lo tienen: la especificación no define si un campo
+   con solo espacios cuenta como vacío, ni si la comparación de emails distingue
+   mayúsculas. Entran a la automatización recién cuando el responsable del producto
+   defina la regla.
+
+   El compromiso dice **30 y no "los que se pueda"** a propósito: un criterio de
+   salida que admite excepciones sin nombrarlas nunca se puede incumplir, y por lo
+   tanto nunca se puede verificar.
 4. **Suite corriendo en CI**, ampliando el smoke actual de `tests/ci/`.
 5. **Reporte de bugs** con los hallazgos reales, cada uno con su evidencia.
 
