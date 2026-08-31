@@ -46,12 +46,14 @@ Feature: Registro de estudiantes
     Then POST /api/register responde con un codigo de exito
     And no se informa la obligatoriedad de ningun campo
 
+  # Sin veredicto: REQ-R01 no define si los espacios en blanco cuentan como contenido.
+  # Se ejecuta para caracterizar el comportamiento real y elevarlo como consulta al
+  # responsable del producto. No se firma ni aprobado ni fallido.
   @TC-R01-007 @req-REQ-R01 @edge_case
   Scenario: Nombre completado unicamente con espacios en blanco
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con el nombre compuesto solo por espacios y el resto de campos validos
-    Then se registra el comportamiento real del sistema como pregunta abierta al responsable del producto
-    And el caso no se marca ni como aprobado ni como fallido porque la especificacion no lo define
+    Then POST /api/register devuelve un codigo de estado y la pantalla muestra un mensaje
 
   @TC-R02-001 @req-REQ-R02 @boundary
   Scenario: Nombre de 1 caracter por debajo del limite inferior
@@ -109,12 +111,14 @@ Feature: Registro de estudiantes
     Then POST /api/register responde con un codigo de rechazo
     And no se crea la cuenta
 
+  # Aceptarlo es el comportamiento correcto: REQ-R03 exige un @ y un dominio con punto,
+  # no un TLD de una lista determinada. Se documenta como limite de interpretacion y no
+  # como defecto, aunque a simple vista parezca un error de tipeo.
   @TC-R03-005 @req-REQ-R03 @edge_case
   Scenario: Email con dominio de primer nivel atipico pero sintacticamente valido
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con un email cuyo dominio tiene punto y un TLD poco habitual
     Then POST /api/register responde con un codigo de exito
-    And el caso se documenta como limite de interpretacion y no como defecto
 
   @TC-R04-001 @req-REQ-R04 @boundary
   Scenario: Contrasena de 7 caracteres por debajo del limite inferior
@@ -207,12 +211,14 @@ Feature: Registro de estudiantes
     Then POST /api/register responde con un codigo de rechazo por email duplicado
     And no se crea una segunda cuenta
 
+  # Sin veredicto: REQ-R07 no define si la comparacion de emails distingue mayusculas
+  # de minusculas. Se ejecuta para caracterizar el comportamiento real y elevarlo como
+  # consulta al responsable del producto. No se firma ni aprobado ni fallido.
   @TC-R07-003 @req-REQ-R07 @edge_case
   Scenario: El mismo email con distinta capitalizacion
     Given que el aspirante registro previamente un email en minusculas con exito confirmado por la API
     When envia el formulario con ese mismo email escrito en mayusculas
-    Then se registra el comportamiento real del sistema como pregunta abierta al responsable del producto
-    And el caso no se marca ni como aprobado ni como fallido porque la especificacion no lo define
+    Then POST /api/register devuelve un codigo de estado y la pantalla muestra un mensaje
 
   @TC-R08-001 @req-REQ-R08 @negative
   Scenario: Un rechazo de la API no se muestra como exito en pantalla
