@@ -14,5 +14,10 @@ node_modules/
 !.env.example
 .DS_Store
 
+# Agent tooling: auto-generated index with absolute paths from the local machine.
+# The project skills it indexes are versioned in .agents/skills/, which is the
+# source of truth. Regenerate with: gentle-ai skill-registry refresh --force
+.atl/
+
 # Logs
 *.log
