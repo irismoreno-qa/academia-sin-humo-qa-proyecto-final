@@ -102,7 +102,7 @@
       "3. El aspirante hace clic en Crear cuenta."
     ],
     "test_data": { "nombre": "L", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
-    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta; el formulario informa que el nombre debe tener entre 2 y 50 caracteres."
+    "expected_result": "El registro es rechazado y no se crea la cuenta; el formulario informa que el nombre debe tener entre 2 y 50 caracteres. El resultado esperado no especifica la capa a propósito: la especificación exige el rechazo sin decir dónde ocurre. Observado el 2026-09-01: el cliente bloquea y no se emite petición, de modo que este caso demuestra la regla en el cliente y NO en el servidor."
   },
   {
     "tc_id": "TC-R02-002",
@@ -141,7 +141,7 @@
       "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta."
     ],
     "test_data": { "nombre": "<cadena de 51 caracteres exactos>", "email": "{EMAIL_UNICO}", "contrasena": "Clave1234", "edad": "30" },
-    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta. El código de estado se verifica en Network: la pantalla por sí sola no alcanza como evidencia."
+    "expected_result": "El registro es rechazado y no se crea la cuenta. Se verifica en Network qué ocurrió: la pantalla por sí sola no alcanza como evidencia, y la ausencia de petición es una lectura tan válida como un código de estado. Observado el 2026-09-01: el cliente bloquea sin emitir petición, de modo que el borde superior queda demostrado en el cliente y NO en el servidor."
   },
 
   {
@@ -194,7 +194,7 @@
       "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta."
     ],
     "test_data": { "nombre": "Iris Moreno", "email": "irismoreno@gmail", "contrasena": "Clave1234", "edad": "30" },
-    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta. REQ-R03 exige un dominio con punto y 'gmail' no lo tiene. Es la mitad de la regla que más probablemente quede sin implementar: verificar el código de estado real, no el mensaje."
+    "expected_result": "El registro es rechazado y no se crea la cuenta: REQ-R03 exige un dominio con punto y 'gmail' no lo tiene. DEFECTO CONFIRMADO el 2026-09-01: la aplicación acepta el registro con 201 y crea la cuenta. El caso es correcto y el producto lo incumple; el fallo se preserva y no se toca la expectativa. Es la mitad de la regla que quedó sin implementar: el cliente exige la arroba y nadie exige el punto."
   },
   {
     "tc_id": "TC-R03-005",
@@ -258,10 +258,10 @@
       "1. El aspirante abre /registro.",
       "2. El aspirante escribe una contraseña de exactamente 65 caracteres, generada y contada por herramienta, y completa el resto con valores válidos centrales.",
       "3. El aspirante hace clic en Crear cuenta con la pestaña Network abierta.",
-      "4. El aspirante registra el código de estado de la respuesta antes de mirar la pantalla."
+      "4. El aspirante registra qué ocurrió en Network —código de estado o ausencia de petición— antes de mirar la pantalla."
     ],
     "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "<cadena de 65 caracteres exactos>", "edad": "30" },
-    "expected_result": "POST /api/register responde con un código de rechazo y no se crea la cuenta. El paso 4 es obligatorio y no negociable: este es el requisito donde ya se observó que la pantalla puede contradecir a la API, y firmar este caso leyendo el mensaje visible lo invalida."
+    "expected_result": "El registro es rechazado y no se crea la cuenta: REQ-R04 exige rechazar 65 caracteres de forma explícita. DEFECTO CONFIRMADO el 2026-09-01: la aplicación acepta el registro con 201 y crea la cuenta. El caso es correcto y el producto lo incumple; el fallo se preserva y no se toca la expectativa. El paso 4 sigue siendo obligatorio: el borde inferior de este mismo requisito sí se bloquea en el cliente, así que solo mirando la red se distingue un rechazo real de una aceptación silenciosa."
   },
 
   {
@@ -409,12 +409,13 @@
     "type": "negative",
     "steps": [
       "1. El aspirante abre /registro con la pestaña Network abierta.",
-      "2. El aspirante envía un registro que la API debe rechazar según REQ-R04, con contraseña de 65 caracteres.",
-      "3. El aspirante anota el código de estado de POST /api/register.",
-      "4. El aspirante anota el mensaje que muestra la pantalla."
+      "2. El aspirante registra un email con éxito confirmado por la API.",
+      "3. El aspirante reenvía el formulario con ese mismo email, provocando un rechazo real del servidor.",
+      "4. El aspirante anota el código de estado de POST /api/register.",
+      "5. El aspirante anota el mensaje que muestra la pantalla."
     ],
-    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO}", "contrasena": "<cadena de 65 caracteres exactos>", "edad": "30" },
-    "expected_result": "Si la API respondió con un código de error, la pantalla no muestra el mensaje de éxito. Se comparan los pasos 3 y 4: cualquier divergencia entre ellos es el defecto que este caso busca. Comparte ejecución con TC-R04-004 pero asevera otra cosa: aquel verifica que el rechazo ocurra, este verifica que el aspirante se entere."
+    "test_data": { "nombre": "Iris Moreno", "email": "{EMAIL_UNICO} reenviado por segunda vez", "contrasena": "Clave1234", "edad": "30" },
+    "expected_result": "Si la API respondió con un código de error, la pantalla no muestra el mensaje de éxito. Se comparan los pasos 4 y 5: cualquier divergencia entre ellos es el defecto que este caso busca. El vehículo es el email duplicado porque es el único rechazo de servidor observado el 2026-09-01 (422); el resto de los rechazos ocurre en el cliente sin emitir petición, y por lo tanto no sirve para contrastar capas. La contraseña de 65 caracteres, que era el vehículo original de este caso, dejó de servir al confirmarse que la API la acepta con 201: eso es el defecto de REQ-R04, no una vía para provocar un rechazo."
   },
   {
     "tc_id": "TC-R08-002",

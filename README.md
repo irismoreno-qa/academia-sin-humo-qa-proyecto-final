@@ -14,24 +14,30 @@ sale de ahí.
 
 ## Por qué el oráculo es el centro de este proyecto
 
-Durante la exploración manual del formulario apareció esto:
+La captura de los once estados del formulario mostró esto:
 
-> La pantalla muestra **"¡Registro exitoso! Tu cuenta ha sido creada."**
-> mientras `POST /api/register` responde **`422`**.
+> **Toda la validación que funciona vive en el cliente.** Nueve de los once rechazos
+> ocurren sin emitir una sola petición a `POST /api/register`. Y las dos reglas que
+> el cliente no implementa —el tope de 64 caracteres de la contraseña y el punto
+> obligatorio en el dominio del email— **no las aplica nadie**: el servidor las
+> acepta con `201` y crea la cuenta.
 
-El backend rechazó la cuenta. El frontend le dijo al aspirante que la tenía.
+No hay una segunda línea de defensa. Lo que el formulario deja pasar, entra.
 
-Eso tiene una consecuencia que va más allá del bug: **cualquier caso de prueba
-firmado leyendo el mensaje de pantalla está certificando una mentira.** No es que
-el caso esté mal escrito — es que su fuente de verdad no es confiable.
+Eso tiene una consecuencia que va más allá de los bugs: **que la pantalla te frene
+no significa que el sistema aplique la regla.** Un caso firmado leyendo solo lo
+visible confunde una cosa con la otra, y da por probado algo que nunca se probó.
 
 Por eso el proyecto no arranca con casos. Arranca declarando contra qué se firma.
+
+Evidencia en [`evidence/`](evidence) — un archivo por estado más el código de estado
+de cada uno. Reproducible con `node tools/capturar-evidencia.js evidence`.
 
 ### La regla de oráculo
 
 | Nivel | Fuente | Uso |
 |---|---|---|
-| **1 · primario** | Respuesta real de `POST /api/register`: código de estado y body | Es lo que decide aprobado o fallido |
+| **1 · primario** | **Si la cuenta se creó o no**: el código de estado de `POST /api/register`, o la *ausencia* de petición cuando el cliente bloquea | Es lo que decide aprobado o fallido |
 | **2 · secundario** | Mensaje visible en pantalla | Se verifica *además* del nivel 1, nunca en su lugar |
 | **3 · prohibido** | El texto de error de la propia aplicación | No se usa jamás para derivar un resultado esperado |
 
@@ -39,9 +45,10 @@ El nivel 3 está prohibido por circular: derivar el resultado esperado del mensa
 que muestra la app equivale a decidir de antemano que la app no puede estar
 equivocada.
 
-**Excepción declarada:** REQ-R01 espera bloqueo del lado del cliente, así que ahí
-el oráculo primario es la *ausencia* de petición en Network — igual de verificable
-que un código de estado.
+**Cuando el cliente bloquea**, la ausencia de petición es una lectura del oráculo tan
+verificable como un código de estado — pero el caso queda demostrado *solo en la capa
+de cliente*. Que el servidor aplique la misma regla no se prueba, y en este producto
+hay motivos para dudarlo.
 
 ### Las otras dos reglas de método
 

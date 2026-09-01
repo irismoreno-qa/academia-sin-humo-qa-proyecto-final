@@ -14,10 +14,12 @@ Verificar que el formulario de `/registro` aplica las siete reglas de la
 especificación (REQ-R01 a R07) y que **el resultado que el aspirante percibe
 coincide con el resultado real del sistema** (REQ-R08, derivado).
 
-Ese segundo objetivo no es decorativo: es la razón por la que este plan existe en
-esta forma. En este producto ya se observó que la pantalla puede anunciar un
-registro exitoso mientras la API lo rechaza. Un plan que verifique solo lo visible
-daría por buena esa mentira.
+Ese segundo objetivo no es decorativo, y la evidencia del 2026-09-01 le dio una razón
+más concreta de la que tenía al escribirse: **toda la validación que funciona vive en
+el cliente.** Nueve de los once estados capturados fueron rechazados sin emitir una
+sola petición, y las dos reglas que el cliente no implementa las acepta el servidor
+con `201`. Un plan que verifique solo lo visible confundiría "el formulario me frenó"
+con "el sistema aplica la regla", que no es lo mismo.
 
 ---
 
@@ -49,13 +51,16 @@ daría por buena esa mentira.
 
 | Regla | Enunciado |
 |---|---|
-| **Oráculo** | Nivel 1: la respuesta de `POST /api/register` decide APROBADO o FALLIDO. Nivel 2: el mensaje en pantalla se verifica **además**. Nivel 3: el texto de error de la app **no** se usa jamás para derivar un resultado esperado, porque es circular |
+| **Oráculo** | Nivel 1: **si la cuenta se creó o no**, evidenciado por el código de estado de `POST /api/register` o por la **ausencia** de petición. Nivel 2: el mensaje en pantalla se verifica **además**. Nivel 3: el texto de error de la app **no** se usa jamás para derivar un resultado esperado, porque es circular |
 | **Aislamiento** | Una sola variable por caso; el resto de los campos en valores válidos centrales |
 | **Evidencia** | La produce quien firma el caso, con interacción real de usuario y captura de Network o export HAR |
 
-**Excepción declarada al oráculo:** REQ-R01 espera bloqueo del lado del cliente. En
-esos siete casos el oráculo primario es la **ausencia** de petición en Network,
-igual de verificable que un código de estado.
+**Bloqueo del lado del cliente.** No es una excepción de REQ-R01: es el comportamiento
+observado en REQ-R01 a R05. Cuando el cliente bloquea, el oráculo es la ausencia de
+petición, y el caso queda **verificado únicamente en la capa de cliente** — que el
+servidor aplique esa misma regla no queda demostrado. Por eso los resultados esperados
+de los casos de rechazo no nombran la capa: la especificación exige el rechazo sin
+decir dónde debe ocurrir.
 
 ### Técnicas aplicadas
 

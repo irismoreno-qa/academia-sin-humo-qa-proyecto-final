@@ -1,8 +1,16 @@
 Feature: Registro de estudiantes
 
   Alta de un aspirante como estudiante de Academia sin Humo.
-  Oráculo primario de todos los escenarios: la respuesta real de POST /api/register.
-  El mensaje visible en pantalla se verifica ademas, nunca en lugar de la respuesta.
+
+  Oráculo primario: si la cuenta se creó o no, evidenciado por el código de estado de
+  POST /api/register o por la ausencia de petición cuando el cliente bloquea. Las dos
+  lecturas son verificables. El mensaje visible en pantalla se verifica además, nunca
+  en lugar del oráculo.
+
+  Los escenarios de rechazo no nombran la capa a propósito: la especificación exige
+  que el registro sea rechazado sin decir dónde debe ocurrir. Atar la aserción al
+  cliente o al servidor la rompería el día que el producto mueva la validación de
+  lugar, sin que la regla haya cambiado.
 
   @TC-R01-001 @req-REQ-R01 @negative
   Scenario: Los cuatro campos vacios bloquean el envio
@@ -59,7 +67,7 @@ Feature: Registro de estudiantes
   Scenario: Nombre de 1 caracter por debajo del limite inferior
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con un nombre de 1 caracter y el resto de campos validos
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R02-002 @req-REQ-R02 @boundary
@@ -80,7 +88,7 @@ Feature: Registro de estudiantes
   Scenario: Nombre de 51 caracteres por encima del limite superior
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con un nombre de 51 caracteres exactos y el resto de campos validos
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R03-001 @req-REQ-R03 @happy_path
@@ -94,21 +102,21 @@ Feature: Registro de estudiantes
   Scenario: Email sin arroba
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con un email que no contiene arroba
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R03-003 @req-REQ-R03 @negative
   Scenario: Email con arroba pero sin dominio
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con un email que termina en arroba
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R03-004 @req-REQ-R03 @negative
   Scenario: Email con dominio sin punto
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con un email cuyo dominio no contiene punto
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   # Aceptarlo es el comportamiento correcto: REQ-R03 exige un @ y un dominio con punto,
@@ -124,7 +132,7 @@ Feature: Registro de estudiantes
   Scenario: Contrasena de 7 caracteres por debajo del limite inferior
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con una contrasena de 7 caracteres exactos y el resto de campos validos
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R04-002 @req-REQ-R04 @boundary
@@ -145,14 +153,14 @@ Feature: Registro de estudiantes
   Scenario: Contrasena de 65 caracteres por encima del limite superior
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con una contrasena de 65 caracteres exactos y el resto de campos validos
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R05-001 @req-REQ-R05 @boundary
   Scenario: Edad de 15 anios por debajo del limite inferior
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con edad 15 y el resto de campos validos
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R05-002 @req-REQ-R05 @boundary
@@ -173,7 +181,7 @@ Feature: Registro de estudiantes
   Scenario: Edad de 100 anios por encima del limite superior
     Given que el aspirante esta en la pagina de registro
     When envia el formulario con edad 100 y el resto de campos validos
-    Then POST /api/register responde con un codigo de rechazo
+    Then el registro es rechazado
     And no se crea la cuenta
 
   @TC-R06-001 @req-REQ-R06 @happy_path
@@ -208,7 +216,7 @@ Feature: Registro de estudiantes
   Scenario: Un email ya registrado es rechazado
     Given que el aspirante registro previamente un email con exito confirmado por la API
     When envia el formulario con ese mismo email y otros datos validos
-    Then POST /api/register responde con un codigo de rechazo por email duplicado
+    Then el registro es rechazado por email duplicado
     And no se crea una segunda cuenta
 
   # Sin veredicto: REQ-R07 no define si la comparacion de emails distingue mayusculas
@@ -220,10 +228,14 @@ Feature: Registro de estudiantes
     When envia el formulario con ese mismo email escrito en mayusculas
     Then POST /api/register devuelve un codigo de estado y la pantalla muestra un mensaje
 
+  # El vehiculo es el email duplicado porque es el unico rechazo de servidor observado:
+  # el resto de los rechazos ocurre en el cliente sin emitir peticion, y sin respuesta
+  # no hay dos capas que contrastar. La contrasena de 65 caracteres, vehiculo original
+  # de este escenario, dejo de servir al confirmarse que la API la acepta con 201.
   @TC-R08-001 @req-REQ-R08 @negative
   Scenario: Un rechazo de la API no se muestra como exito en pantalla
-    Given que el aspirante esta en la pagina de registro con la pestana Network abierta
-    When envia un registro que la API debe rechazar por contrasena fuera de rango
+    Given que el aspirante registro previamente un email con exito confirmado por la API
+    When reenvia el formulario con ese mismo email y la pestana Network abierta
     Then POST /api/register responde con un codigo de error
     And la pantalla no muestra el mensaje de exito
 
