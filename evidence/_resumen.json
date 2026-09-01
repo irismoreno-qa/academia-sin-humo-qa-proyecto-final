@@ -1,0 +1,170 @@
+{
+  "email_usado": "iris.qa.1788272538397@gmail.com",
+  "estados": [
+    {
+      "estado": "registro-obligatorios",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "El nombre es obligatorio",
+        "Email",
+        "El email es obligatorio",
+        "Contraseña",
+        "La contraseña es obligatoria",
+        "Edad",
+        "La edad es obligatoria",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-nombre-corto",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "El nombre debe tener entre 2 y 50 caracteres",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-password-corta",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Contraseña",
+        "La contraseña debe tener al menos 8 caracteres",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-edad-baja",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "Debes tener al menos 16 años",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-nombre-largo",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "El nombre debe tener entre 2 y 50 caracteres",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-password-larga",
+      "peticion_a_api": "si",
+      "codigo": 201,
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": true
+    },
+    {
+      "estado": "registro-edad-alta",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "La edad máxima es 99",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-email-invalido",
+      "peticion_a_api": "no",
+      "codigo": "sin peticion",
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "El email no tiene un formato válido",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    },
+    {
+      "estado": "registro-email-sin-punto",
+      "peticion_a_api": "si",
+      "codigo": 201,
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": true
+    },
+    {
+      "estado": "registro-exito",
+      "peticion_a_api": "si",
+      "codigo": 201,
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": true
+    },
+    {
+      "estado": "registro-email-duplicado",
+      "peticion_a_api": "si",
+      "codigo": 422,
+      "dom_cambio": true,
+      "texto_visible": [
+        "Nombre completo",
+        "Email",
+        "Este email ya está registrado",
+        "Contraseña",
+        "Edad",
+        "Crear cuenta"
+      ],
+      "mensaje_exito_en_body": false
+    }
+  ]
+}
