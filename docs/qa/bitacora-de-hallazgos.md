@@ -44,6 +44,56 @@ casos, van a fallar, y ahí quedará el resultado firmado.
 
 ---
 
+## Corrida 2 · Primera ejecución de la suite E2E — 2026-09-01
+
+`npx playwright test tests/e2e/registro.spec.ts` · 30 casos automatizados.
+
+| ID | Caso | Tipo | Esperado (según la spec) | Observado | Código | Evidencia |
+|---|---|---|---|---|---|---|
+| **H-05** | `CP-14` | `DEFECTO` | REQ-R03 — la versión de trabajo nombra `usuario@` como inválido de forma explícita | Registro aceptado y cuenta creada con `irismoreno@`, sin dominio. **No aparece ningún mensaje de error** | `201` | `tools/capturar-evidencia.js` · corrida directa 2026-09-01 |
+| **H-06** | — | `NO ES DEFECTO` | `tests/login.spec.ts` del andamiaje del curso espera un login exitoso con `ana.garcia@ejemplo.com` | `POST /api/login` responde `401`. La página anuncia *"usa las credenciales demo de abajo"*: el dato de prueba del test quedó obsoleto | `401` | Corrida directa 2026-09-01 |
+
+### H-05 refina H-02, no lo repite
+
+H-02 se había leído como *"media regla implementada: el `@` sí, el punto no"*. H-05 muestra que
+es peor: **el cliente solo verifica que exista una arroba.** `irismoreno@` no tiene dominio ni
+punto y entra igual. La regla de REQ-R03 tiene tres condiciones —arroba, dominio, punto en el
+dominio— y solo la primera se aplica.
+
+Los dos hallazgos van juntos al reporte de bugs: es un solo defecto con dos manifestaciones.
+
+### H-06 está fuera del alcance y no se corrige
+
+El fallo es de `tests/login.spec.ts`, que viene del commit inicial del curso y que la estrategia
+declara fuera de alcance. La causa es de **datos**, no de producto: el par usuario/contraseña
+que el test tiene fijo ya no es válido. No se toca, porque corregir un test fuera del alcance
+declarado es ampliar el alcance sin decirlo.
+
+Se registra porque afecta a la Fase 5: mientras siga ahí, la suite completa queda en rojo
+aunque la suite del proyecto esté en verde.
+
+### Hallazgo sobre la propia automatización
+
+La primera corrida dio **25 pasados y 5 fallados**, y dos de esos fallos decían
+*"Expected to fail, but passed"* sobre defectos que ya estaban confirmados con evidencia.
+
+Causa: las aserciones sobre la red se evaluaban **antes** de que llegara la respuesta.
+
+```ts
+await expect(registroPage.successMessage).toBeHidden();   // pasa: aún no renderizó
+expect(peticionesRegistro).not.toContain(201);            // pasa: array aún vacío
+```
+
+Las dos son aserciones negativas, así que encontraban exactamente la ausencia que buscaban.
+**Un defecto real se leyó como comportamiento correcto.** Es el falso verde en su forma más
+peligrosa, y no lo produjo el producto: lo produjo el test.
+
+Corregido con `esperarResultado()`, que espera a una condición observable —llegó una respuesta
+o apareció un error— sin espera por tiempo fijo. Queda anotado porque explica por qué el
+oráculo se verifica *después* de una señal determinista y nunca antes.
+
+---
+
 ## Notas
 
 **H-01 y H-02 comparten causa, y H-03 la acompaña.** Los nueve rechazos observados
@@ -84,10 +134,10 @@ aprobados ni fallidos.
 
 | | |
 |---|---|
-| Casos ejecutados y firmados | **0 / 32** — la ejecución formal es la Fase 2 |
-| Hallazgos `DEFECTO` | 3 |
+| Casos automatizados y ejecutados | **30 / 32** — CP-07 y CP-30 quedan fuera por indeterminados |
+| Hallazgos `DEFECTO` | 4 |
 | Hallazgos `PREGUNTA ABIERTA` | 0 |
-| Hallazgos `NO ES DEFECTO` | 1 |
+| Hallazgos `NO ES DEFECTO` | 2 |
 | Casos sin verificar (sin código de estado citable) | 0 |
 
 La última fila es la que importa: un caso sin código de estado citable —o sin la
