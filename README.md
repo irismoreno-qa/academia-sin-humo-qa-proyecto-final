@@ -85,18 +85,26 @@ lo que ya decidiste probar no es una estrategia.
 
 ## Estado
 
+Numeración de fases según la consigna del proyecto final.
+
 | Fase | Entregable | Estado |
 |---|---|---|
-| 0 · Estrategia | Riesgo, evaluación de los 9 flujos, alcance, reglas de método | **Completa** |
-| 1 · Diseño de casos | 32 casos sobre 8 requisitos, escenarios BDD, plan de prueba, matriz de trazabilidad | **Completa** |
-| 2 · Ejecución manual | Ejecución de los 32 casos con evidencia de red por caso | Pendiente |
-| 3 · Automatización | Suite UI con Page Object afirmando sobre la respuesta de la API | Esqueleto: POM con 5 locators y 1 test de visibilidad |
-| 4 · CI | Smoke en GitHub Actions | Funcionando |
-| 5 · Reporte de bugs | Hallazgos con pasos reproducibles y evidencia | Pendiente |
+| 0 · Estrategia | [`docs/estrategia.md`](docs/estrategia.md) — riesgo cuantificado, evaluación de los 9 flujos, alcance y reglas de método | **Completa** |
+| 1 · Casos de prueba | [`docs/casos-de-prueba.md`](docs/casos-de-prueba.md) — 32 casos sobre 8 requisitos, más BDD, plan y trazabilidad en [`docs/qa/`](docs/qa) | **Completa** — juez: 11/12 |
+| 2 · E2E por UI | [`tests/e2e/`](tests/e2e) + [`pages/`](pages) — 30 casos con Page Object | **Completa** |
+| 3 · API | [`tests/api/`](tests/api) — 11 tests de contrato sobre `POST /api/register` | **Completa** |
+| 4 · Integrado | [`tests/integrado/`](tests/integrado) — la API prepara, la UI verifica, la API limpia | **Completa** |
+| 5 · CI | [`.github/workflows/`](.github/workflows) — 43 tests en GitHub Actions | **Completa** — [run verificado](reports/ci-report.md) |
+| 6 · Reporte de bugs | `docs/reporte-de-bugs.md` + este README | Pendiente |
 
-Los 32 casos están **diseñados, no ejecutados**. `docs/qa/test-cases.json` no tiene
-campo para resultado obtenido: diseño y ejecución son artefactos separados, y
-mezclarlos es exactamente lo que permite firmar como verificado algo que no lo está.
+**43 tests, verde reproducible.** Ocho llevan `test.fail()` contra defectos
+confirmados contra la especificación: corren, ejecutan sus aserciones y Playwright
+verifica que efectivamente fallen. El día que el producto se corrija se pondrán en
+rojo avisando que hay que quitar la anotación.
+
+**Dos casos quedan sin automatizar** —`CP-07` y `CP-30`— porque la especificación no
+define su resultado esperado. Un test necesita algo contra lo cual afirmar; esos dos
+se documentan como preguntas al responsable del producto.
 
 ---
 
@@ -241,19 +249,33 @@ npm run test:list     # lista los casos de login sin ejecutarlos
 npm run report        # abre el último reporte HTML
 ```
 
-### Smoke de CI
-
-```bash
-npx playwright test tests/ci/ci-smoke.spec.ts --project=chromium
-```
-
-Comprueba que Playwright arranca, abre Chromium y ejecuta una expectativa. **No
-valida el producto** — es la base sobre la que se construye el CI.
+### Integración continua
 
 El workflow vive en [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml)
-y se generó con la skill `generar-workflow-ci`, que inspecciona el proyecto,
-propone un plan en estado `PLAN_PENDIENTE` y solo escribe el archivo después de
-recibir `PLAN APROBADO`.
+y corre los 43 tests en cada push y en cada pull request a `main`.
+
+**Run de referencia:**
+[`33538784699`](https://github.com/irismoreno-qa/academia-sin-humo-qa-proyecto-final/actions/runs/33538784699)
+— ✅ `success` en 2 m 03 s, con el artifact `playwright-report` descargado y revisado.
+Detalle completo en [`reports/ci-report.md`](reports/ci-report.md).
+
+```
+Verificar que no hay tests silenciados  →  Sin skip, sin only, sin waitForTimeout.
+Comprobar el entorno                    →  1 passed (1.0s)
+Ejecutar la suite del proyecto          →  43 passed (53.3s)
+```
+
+Dos decisiones que vale la pena mirar:
+
+- **El smoke corre antes que la suite.** Si falla, el problema es el entorno y no los
+  tests. Un rojo en el paso 1 y un rojo en el paso 2 significan cosas distintas.
+- **La prohibición de silenciar tests la hace cumplir el CI**, no un documento. Un
+  `grep` falla el build si aparece `test.skip`, `.only` o `waitForTimeout`.
+
+**Alcance parcial, declarado dentro del propio workflow.** Quedan fuera
+`tests/login.spec.ts` —falla por credenciales demo obsoletas, hallazgo H-06, y el
+login está fuera del alcance— y `tests/registro.spec.ts`, redundante con `CP-01` a
+`CP-06`.
 
 ---
 
