@@ -95,7 +95,7 @@ Numeración de fases según la consigna del proyecto final.
 | 3 · API | [`tests/api/`](tests/api) — 11 tests de contrato sobre `POST /api/register` | **Completa** |
 | 4 · Integrado | [`tests/integrado/`](tests/integrado) — la API prepara, la UI verifica, la API limpia | **Completa** |
 | 5 · CI | [`.github/workflows/`](.github/workflows) — 43 tests en GitHub Actions | **Completa** — [run verificado](reports/ci-report.md) |
-| 6 · Reporte de bugs | `docs/reporte-de-bugs.md` + este README | Pendiente |
+| 6 · Reporte de bugs | [`docs/reporte-de-bugs.md`](docs/reporte-de-bugs.md) — 5 defectos con evidencia + este README | **Completa** |
 
 **43 tests, verde reproducible.** Ocho llevan `test.fail()` contra defectos
 confirmados contra la especificación: corren, ejecutan sus aserciones y Playwright
@@ -110,65 +110,110 @@ se documentan como preguntas al responsable del producto.
 
 ## Matriz de trazabilidad de resultados
 
-Las columnas **API** y **UI** son los dos niveles del oráculo, separados a propósito:
+**25 PASS · 5 FAIL · 2 sin automatizar.** Los cinco `FAIL` son defectos del producto
+contra la especificación, preservados con `test.fail()`.
 
 | Columna | Qué responde |
 |---|---|
-| **API** | ¿`POST /api/register` respondió como exige la especificación? — *nivel 1, el que decide* |
-| **UI** | ¿La pantalla reflejó esa respuesta? — *nivel 2, se verifica además* |
-| **Resultado** | El veredicto del caso: `PASS` solo si ambos niveles lo son |
+| **API** | Qué respondió `POST /api/register`, o `sin petición` cuando el formulario bloqueó antes de enviar |
+| **UI** | Qué mostró la pantalla |
+| **Resultado** | El veredicto del caso |
 | **Hallazgo** | `H-0X` de la [bitácora](docs/qa/bitacora-de-hallazgos.md), cuando hubo algo que registrar |
 
-Separarlas no es burocracia. **Una fila con `API: PASS` y `UI: FAIL` es exactamente
-el defecto de REQ-R08** —el backend rechazó, la pantalla dijo que todo salió bien— y
-en esta tabla se ve sin leer una línea de texto. Una sola columna de resultado lo
-escondería.
+Las dos columnas se separaron para detectar divergencias entre capas. **No hay
+ninguna: coinciden en las 30 filas ejecutadas.** Ese resultado negativo es un
+hallazgo, y desmintió la hipótesis con la que arrancó el proyecto.
 
-Estados: `PASS` · `FAIL` · `BLOQUEADO` · `SIN VERIFICAR` (ejecutado pero sin código
-de estado citable) · `—` (no ejecutado todavía).
+Lo que sí muestra la columna **API** es *dónde* se aplicó cada regla. `sin petición`
+significa que el formulario bloqueó y **el servidor nunca se puso a prueba** por esa
+vía — el hueco que la suite de API vino a cerrar.
 
 | Requisito | Test | API | UI | Resultado | Hallazgo |
-|---|---|:--:|:--:|:--:|---|
-| **REQ-R01** | `TC-R01-001` · Los cuatro campos vacíos bloquean el envío | — | — | — | — |
-|  | `TC-R01-002` · Solo el nombre vacío, resto de campos válidos | — | — | — | — |
-|  | `TC-R01-003` · Solo el email vacío, resto de campos válidos | — | — | — | — |
-|  | `TC-R01-004` · Solo la contraseña vacía, resto de campos válidos | — | — | — | — |
-|  | `TC-R01-005` · Solo la edad vacía, resto de campos válidos | — | — | — | — |
-|  | `TC-R01-006` · Los cuatro campos completos con valores válidos permiten el envío | — | — | — | — |
-|  | `TC-R01-007` · Campo completado únicamente con espacios en blanco | — | — | — | — |
-| **REQ-R02** | `TC-R02-001` · Nombre por debajo del límite inferior: 1 carácter | — | — | — | — |
-|  | `TC-R02-002` · Nombre en el límite inferior válido: 2 caracteres exactos | — | — | — | — |
-|  | `TC-R02-003` · Nombre en el límite superior válido: 50 caracteres exactos | — | — | — | — |
-|  | `TC-R02-004` · Nombre por encima del límite superior: 51 caracteres | — | — | — | — |
-| **REQ-R03** | `TC-R03-001` · Email válido con @ y dominio con punto | — | — | — | — |
-|  | `TC-R03-002` · Email sin arroba | — | — | — | — |
-|  | `TC-R03-003` · Email con arroba pero sin dominio | — | — | — | — |
-|  | `TC-R03-004` · Email con dominio sin punto | — | — | — | — |
-|  | `TC-R03-005` · Email con dominio de primer nivel atípico pero sintácticamente válido | — | — | — | — |
-| **REQ-R04** | `TC-R04-001` · Contraseña por debajo del límite inferior: 7 caracteres | — | — | — | — |
-|  | `TC-R04-002` · Contraseña en el límite inferior válido: 8 caracteres exactos | — | — | — | — |
-|  | `TC-R04-003` · Contraseña en el límite superior válido: 64 caracteres exactos | — | — | — | — |
-|  | `TC-R04-004` · Contraseña por encima del límite superior: 65 caracteres | — | — | — | — |
-| **REQ-R05** | `TC-R05-001` · Edad por debajo del límite inferior: 15 años | — | — | — | — |
-|  | `TC-R05-002` · Edad en el límite inferior válido: 16 años exactos | — | — | — | — |
-|  | `TC-R05-003` · Edad en el límite superior válido: 99 años exactos | — | — | — | — |
-|  | `TC-R05-004` · Edad por encima del límite superior: 100 años | — | — | — | — |
-| **REQ-R06** | `TC-R06-001` · El formulario queda vacío tras un registro exitoso confirmado por la API | — | — | — | — |
-|  | `TC-R06-002` · El formulario conserva los datos tras un registro rechazado | — | — | — | — |
-|  | `TC-R06-003` · Dos registros exitosos consecutivos sin arrastre de datos | — | — | — | — |
-| **REQ-R07** | `TC-R07-001` · Un email no registrado previamente es aceptado | — | — | — | — |
-|  | `TC-R07-002` · Un email ya registrado es rechazado | — | — | — | — |
-|  | `TC-R07-003` · El mismo email con distinta capitalización | — | — | — | — |
-| **REQ-R08** | `TC-R08-001` · Un rechazo de la API no se muestra como éxito en pantalla | — | — | — | — |
-|  | `TC-R08-002` · Una aceptación de la API se muestra como éxito en pantalla | — | — | — | — |
+|---|---|:--:|:--:|:--:|:--:|
+| **REQ-R01** | `CP-01` · Los cuatro campos vacíos bloquean el envío | sin petición | 4 errores | PASS | — |
+|  | `CP-02` · Solo el nombre vacío, resto de campos válidos | sin petición | error nombre | PASS | — |
+|  | `CP-03` · Solo el email vacío, resto de campos válidos | sin petición | error email | PASS | — |
+|  | `CP-04` · Solo la contraseña vacía, resto de campos válidos | sin petición | error contraseña | PASS | — |
+|  | `CP-05` · Solo la edad vacía, resto de campos válidos | sin petición | error edad | PASS | — |
+|  | `CP-06` · Los cuatro campos completos con valores válidos permiten el envío | `201` | éxito | PASS | — |
+|  | `CP-07` · Campo completado únicamente con espacios en blanco | — | — | NO AUTOMATIZADO | sin resultado esperado en la spec |
+| **REQ-R02** | `CP-08` · Nombre por debajo del límite inferior: 1 carácter | sin petición | error nombre | PASS | — |
+|  | `CP-09` · Nombre en el límite inferior válido: 2 caracteres exactos | `201` | éxito | PASS | — |
+|  | `CP-10` · Nombre en el límite superior válido: 50 caracteres exactos | `201` | éxito | PASS | — |
+|  | `CP-11` · Nombre por encima del límite superior: 51 caracteres | sin petición | error nombre | PASS | — |
+| **REQ-R03** | `CP-12` · Email válido con @ y dominio con punto | `201` | éxito | PASS | — |
+|  | `CP-13` · Email sin arroba | sin petición | error email | PASS | — |
+|  | `CP-14` · Email con arroba pero sin dominio | **`201`** | **éxito** | **FAIL** | **H-05** |
+|  | `CP-15` · Email con dominio sin punto | **`201`** | **éxito** | **FAIL** | **H-02** |
+|  | `CP-16` · Email con dominio de primer nivel atípico pero sintácticamente válido | `201` | éxito | PASS | — |
+| **REQ-R04** | `CP-17` · Contraseña por debajo del límite inferior: 7 caracteres | sin petición | error contraseña | PASS | — |
+|  | `CP-18` · Contraseña en el límite inferior válido: 8 caracteres exactos | `201` | éxito | PASS | — |
+|  | `CP-19` · Contraseña en el límite superior válido: 64 caracteres exactos | `201` | éxito | PASS | — |
+|  | `CP-20` · Contraseña por encima del límite superior: 65 caracteres | **`201`** | **éxito** | **FAIL** | **H-01** |
+| **REQ-R05** | `CP-21` · Edad por debajo del límite inferior: 15 años | sin petición | error edad | PASS | — |
+|  | `CP-22` · Edad en el límite inferior válido: 16 años exactos | `201` | éxito | PASS | — |
+|  | `CP-23` · Edad en el límite superior válido: 99 años exactos | `201` | éxito | PASS | — |
+|  | `CP-24` · Edad por encima del límite superior: 100 años | sin petición | error edad | PASS | — |
+| **REQ-R06** | `CP-25` · El formulario queda vacío tras un registro exitoso confirmado por la API | `201` | **form conserva datos** | **FAIL** | **H-03** |
+|  | `CP-26` · El formulario conserva los datos tras un registro rechazado | sin petición | form conserva datos | PASS | — |
+|  | `CP-27` · Dos registros exitosos consecutivos sin arrastre de datos | `201` + `201` | **form conserva datos** | **FAIL** | **H-03** |
+| **REQ-R07** | `CP-28` · Un email no registrado previamente es aceptado | `201` | éxito | PASS | — |
+|  | `CP-29` · Un email ya registrado es rechazado | `201` + `422` | error duplicado | PASS | — |
+|  | `CP-30` · El mismo email con distinta capitalización | — | — | NO AUTOMATIZADO | sin resultado esperado en la spec |
+| **REQ-R08** | `CP-31` · Un rechazo de la API no se muestra como éxito en pantalla | `201` + `422` | sin éxito | PASS | — |
+|  | `CP-32` · Una aceptación de la API se muestra como éxito en pantalla | `201` | éxito | PASS | — |
 
-**Cómo se llena.** No a mano al final: fila por fila, a medida que cada caso se
-ejecuta, siguiendo el [workflow de hallazgos](docs/qa/workflow-hallazgos.md). Cuando
-un test automatizado falla, la skill
+**Cómo se llenó.** Fila por fila, a medida que cada caso se ejecutó, siguiendo el
+[workflow de hallazgos](docs/qa/workflow-hallazgos.md). Cuando un test falla, la skill
 [`analizar-fallo`](.agents/skills/analizar-fallo/SKILL.md) traza el caso a su
 requisito, registra esperado contra observado, guarda la evidencia y **propone** una
 acción — pero la decisión la toma la QA, y nunca se modifica la expectativa del test
 para que pase.
+
+---
+
+## Hallazgos
+
+**Cinco defectos contra la especificación.** Detalle completo, con pasos, evidencia y
+severidad, en [`docs/reporte-de-bugs.md`](docs/reporte-de-bugs.md).
+
+| # | Requisito | Qué encontré | Severidad | Capa |
+|---|---|---|---|---|
+| BUG-01 | REQ-S01 | Un estudiante autenticado no puede entrar a `/cursos` ni a `/mi-progreso` | **Crítica** | Integrado |
+| BUG-02 | REQ-R03 | La validación de email solo verifica que exista una arroba: `usuario@` se registra con `201` | **Alta** | UI + API |
+| BUG-03 | REQ-C04 | El cupo de un curso no baja al inscribirse | **Alta** | API |
+| BUG-04 | REQ-R04 | Se acepta una contraseña de 65 caracteres, que la spec manda rechazar | Media | UI + API |
+| BUG-05 | REQ-R06 | El formulario no se limpia tras un registro exitoso | Media | UI |
+
+### El que más me costó, y el que más vale
+
+**BUG-01** empezó como un test integrado que fallaba. Terminó siendo esto:
+
+```
+POST /api/login     → 200 · crea la cookie ash_session
+POST /api/enroll    → 200 · LA API HONRA ESA COOKIE, la inscripción se crea
+GET  /api/progress  → 200 · devuelve la inscripción del usuario
+GET  /api/auth/me   → {"realUser": null}
+UI /mi-progreso     → "🔒 Necesitas iniciar sesión"
+```
+
+**La sesión no está rota: está sin resolver.** Los datos existen y la API los devuelve
+para ese usuario. Lo que falla es el endpoint del que la interfaz depende para saber
+quién es el visitante. El estado se preserva; lo que se pierde es la identidad.
+
+Y ninguna capa por separado lo mostraba. Por API todo respondía bien; por UI parecía
+que la sesión nunca se había creado.
+
+### Lo que revisé y NO es defecto
+
+Vale tanto como la lista de arriba, porque distingue *"lo verifiqué y estaba bien"* de
+*"no lo miré"*: el `min="1" max="150"` del input de edad contra los 16–99 de la spec,
+el `gmail.con` que la regla escrita sí admite, el contrato de `POST /api/enroll` que
+cumple REQ-A03 en sus tres respuestas, y el mensaje de bienvenida que cumple REQ-L04.
+
+Más **dos preguntas abiertas** que no son bugs: la especificación no define si un campo
+con solo espacios cuenta como vacío, ni si los emails duplicados distinguen mayúsculas.
+Reportarlas como defectos sería inventar el resultado esperado.
 
 ---
 
@@ -199,8 +244,8 @@ para que pase.
 
 En negrita, los valores que deben aceptarse.
 
-**Dos casos no se firman ni aprobados ni fallidos.** `TC-R01-007` (nombre con solo
-espacios) y `TC-R07-003` (mismo email con distinta capitalización): la
+**Dos casos no se firman ni aprobados ni fallidos.** `CP-07` (nombre con solo
+espacios) y `CP-30` (mismo email con distinta capitalización): la
 especificación no los define, así que se documentan como preguntas al responsable
 del producto. Reportar un defecto sin una regla que lo respalde es inventar el
 resultado esperado.
@@ -229,6 +274,26 @@ y el piso de cobertura se cubre por análisis de valores límite en los requisit
 de rango numérico.
 
 Una desviación sin justificar es un error. Una desviación argumentada es criterio.
+
+### Herramientas de IA que construí, y qué encontró cada una
+
+| Herramienta | Qué hace | Qué aportó en este proyecto |
+|---|---|---|
+| **`@pom-agent`** | Genera y verifica Page Objects contra evidencia HTML real, con rúbrica de 12 puntos | El POM de registro, 12/12. Y en su primera corrida destapó que **dos defectos reales pasaban en vacío** por una aserción negativa mal sincronizada |
+| **`@api-project-agent`** | Inicia o continúa un proyecto de tests de API con plan aprobado y contrato verificado | Los 11 tests de contrato. **Desmintió la hipótesis central del proyecto**: el servidor sí valida |
+| **`@integration-agent`** | Construye un escenario UI + API con el dato dinámico compartido declarado | El flujo integrado. Con él apareció **BUG-01**, el hallazgo más grave |
+| **Juez con rúbrica** | Puntúa casos de prueba contra cobertura, claridad, casos límite y Gherkin | Veredicto **11/12** sobre los 32 casos. De sus 5 señalamientos, [acepté 1 y rechacé 4](docs/qa/veredicto-del-juez.md) |
+| **Matriz de decisión** | Puntúa candidatos a automatización por frecuencia × estabilidad × valor × mantenimiento | Priorizó los 11 tests de API: **7 que descubren por encima de 4 que confirman** |
+| **`analizar-fallo`** | Clasifica un test en rojo entre producto, automatización, datos, ambiente o requisito | La clasificación de H-06 como problema de datos y no de producto |
+
+**Ninguna decide.** Las seis proponen y se detienen en un gate humano: los workflows
+de agente no pueden escribir la palabra `ACEPTADO`, que está reservada a la QA. Cada
+reporte en [`reports/`](reports) tiene esa línea, y la decisión firmada.
+
+Lo que más me sirvió de trabajar así no fue la velocidad. Fue que **tres capas de
+revisión encontraron cosas distintas**: el juez halló dos defectos de forma, un script
+de validación halló un tercero que el juez no vio, y la ejecución halló un supuesto
+falso que ninguno de los dos podía detectar leyendo documentos.
 
 ---
 

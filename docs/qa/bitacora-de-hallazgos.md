@@ -233,7 +233,7 @@ aprobados ni fallidos.
 | | |
 |---|---|
 | Casos automatizados y ejecutados | **30 / 32** — CP-07 y CP-30 quedan fuera por indeterminados |
-| Hallazgos `DEFECTO` | 6 — reducibles a 4 defectos raíz |
+| Hallazgos `DEFECTO` | 6 — reducibles a **5 defectos raíz**, ver [reporte-de-bugs](../reporte-de-bugs.md) |
 | Hallazgos `PREGUNTA ABIERTA` | 0 |
 | Hallazgos `NO ES DEFECTO` | 4 |
 | Casos sin verificar (sin código de estado citable) | 0 |
