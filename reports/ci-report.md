@@ -64,6 +64,13 @@ workflow:
 | `tests/login.spec.ts` | Falla: `POST /api/login` → `401` con credenciales demo obsoletas (hallazgo H-06). Problema de datos, no de producto, y el login está fuera del alcance declarado. Incluirlo dejaría el CI rojo por algo ajeno al proyecto; corregirlo sería ampliar el alcance sin decirlo |
 | `tests/registro.spec.ts` | Smoke de visibilidad heredado del curso, redundante con los casos CP-01 a CP-06 |
 
+> **Nota posterior — 2026-09-01.** Este reporte documenta el run `33538784699`, en el que
+> esos dos archivos existían y quedaban excluidos. Después se **eliminaron del
+> repositorio**: si no forman parte del alcance, no corresponde mantenerlos con una
+> excepción que los justifique. Desde entonces el CI cubre el 100% de lo que hay, y
+> `npm test` devuelve exit code 0. El texto de arriba se conserva sin cambios porque
+> describe el run tal como ocurrió.
+
 ## Dos decisiones de diseño del workflow
 
 **El smoke corre antes que la suite.** Si falla, el problema es el entorno y no los

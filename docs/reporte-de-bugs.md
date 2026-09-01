@@ -183,7 +183,7 @@ especificación y se descartó con criterio, en lugar de dejarlo sin mirar.
 | `irismoreno@gmail.con` se acepta | **No es defecto.** REQ-R03 exige un dominio con punto, no un TLD de una lista determinada. `gmail.con` cumple la regla escrita aunque parezca un error de tipeo. Es un límite de interpretación y se documenta como tal |
 | El contrato de `POST /api/enroll` | **Cumple REQ-A03** en sus tres respuestas: `200` con `status: "inscrito"`, `400` sin `courseId`, `404` con curso inexistente |
 | El mensaje de bienvenida tras el login | **Cumple REQ-L04:** *"👋 ¡Hola, Iris!"*, con el nombre del usuario |
-| `tests/login.spec.ts` del andamiaje del curso falla | **No es defecto del producto.** `POST /api/login` devuelve `401` porque el par usuario/contraseña que el test tiene fijo ya no es válido. Es un problema de datos de prueba, y el login está fuera del alcance declarado |
+| `tests/login.spec.ts` del andamiaje del curso fallaba | **No es defecto del producto.** `POST /api/login` devolvía `401` porque el par usuario/contraseña que el test tenía fijo ya no es válido; una cuenta recién registrada sí loguea con `200`. Era un problema de datos de prueba. El archivo se eliminó del repositorio por estar fuera del alcance, no se corrigió |
 
 ---
 

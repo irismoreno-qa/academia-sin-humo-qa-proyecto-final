@@ -201,7 +201,7 @@ y cuál sería el orden de ampliación si el alcance creciera:
 | Reserva de fecha (`REQ-D01–D03`) | Medio — límites de fecha explícitos y baratos de probar | 5ª |
 | Subida de CV (`REQ-U01–U03`) | Medio — única superficie de seguridad de archivos | 6ª |
 | Listado paginado (`REQ-N01–N03`) | Bajo | 7ª |
-| Login básico (`REQ-L01, L02, L04`) | Bajo — ya cubierto por `tests/login.spec.ts` del curso | — |
+| Login básico (`REQ-L01, L02, L04`) | Bajo — validación simple, sin hallazgos esperables | — |
 
 ---
 

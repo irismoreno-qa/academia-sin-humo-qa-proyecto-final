@@ -69,8 +69,14 @@ declara fuera de alcance. La causa es de **datos**, no de producto: el par usuar
 que el test tiene fijo ya no es válido. No se toca, porque corregir un test fuera del alcance
 declarado es ampliar el alcance sin decirlo.
 
-Se registra porque afecta a la Fase 5: mientras siga ahí, la suite completa queda en rojo
-aunque la suite del proyecto esté en verde.
+**Resuelto el 2026-09-01 eliminando el archivo.** No se corrigieron las credenciales: se
+quitó del repositorio junto con el resto de los tests heredados que no pertenecen al
+alcance del proyecto. Si algo no forma parte del alcance, no tiene por qué estar
+ocupando lugar ni exigiendo una excepción en el CI para justificarlo.
+
+El hallazgo se conserva porque documenta un diagnóstico correcto —problema de datos y
+no de producto— y porque la verificación que lo sostiene sigue siendo válida: una
+cuenta recién registrada **sí** loguea con `200`.
 
 ### Hallazgo sobre la propia automatización
 

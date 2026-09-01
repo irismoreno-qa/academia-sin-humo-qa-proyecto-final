@@ -308,7 +308,6 @@ npx playwright install chromium
 
 ```bash
 npm test              # toda la suite
-npm run test:login    # solo la suite de login
 npm run test:api      # solo la suite de API
 npm run test:list     # lista los casos de login sin ejecutarlos
 npm run report        # abre el último reporte HTML
@@ -337,10 +336,9 @@ Dos decisiones que vale la pena mirar:
 - **La prohibición de silenciar tests la hace cumplir el CI**, no un documento. Un
   `grep` falla el build si aparece `test.skip`, `.only` o `waitForTimeout`.
 
-**Alcance parcial, declarado dentro del propio workflow.** Quedan fuera
-`tests/login.spec.ts` —falla por credenciales demo obsoletas, hallazgo H-06, y el
-login está fuera del alcance— y `tests/registro.spec.ts`, redundante con `CP-01` a
-`CP-06`.
+**El CI cubre el 100% del repositorio.** Los tests heredados del curso que no
+formaban parte del proyecto se eliminaron: si algo no pertenece al alcance, no tiene
+por qué estar ocupando lugar ni exigiendo una excepción para justificarlo.
 
 ---
 

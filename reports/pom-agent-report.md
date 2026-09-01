@@ -41,6 +41,11 @@ encontraría exactamente lo que busca. Localizar por `testid` y afirmar el texto
 test mantiene separadas las dos cosas. Hay precedente en el proyecto:
 `pages/login.page.ts` usa `getByTestId('login-lockout')` por el mismo motivo.
 
+> **Nota posterior — 2026-09-01.** Ese archivo se eliminó del repositorio junto con el
+> resto del andamiaje heredado que no pertenece al alcance del proyecto. El precedente
+> era real en el momento de esta verificación y se conserva citado tal cual, porque
+> este reporte documenta la corrida como ocurrió.
+
 Ningún locator depende de clases CSS, posiciones ni jerarquía del DOM.
 
 ### 2. Aserciones fuera — 3/3

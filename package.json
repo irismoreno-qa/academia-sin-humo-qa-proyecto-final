@@ -4,13 +4,12 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
-    "test:login": "playwright test tests/login.spec.ts",
-    "test:list": "playwright test tests/login.spec.ts --list --reporter=line",
     "report": "playwright show-report",
     "test:api": "playwright test tests/api",
     "test:e2e": "playwright test tests/e2e",
     "test:proyecto": "playwright test tests/e2e tests/api tests/integrado",
-    "test:integrado": "playwright test tests/integrado"
+    "test:integrado": "playwright test tests/integrado",
+    "test:list": "playwright test --list --reporter=line"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

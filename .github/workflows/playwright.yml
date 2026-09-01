@@ -1,19 +1,8 @@
 # Suite del proyecto final — Academia sin Humo
 #
-# Corre 43 tests: 30 E2E de registro, 12 de contrato de API y 1 flujo integrado.
-#
-# ALCANCE PARCIAL, DECLARADO. Dos archivos del andamiaje del curso quedan fuera a
-# propósito, y el motivo importa tanto como la exclusión:
-#
-#   tests/login.spec.ts     Falla. POST /api/login devuelve 401 porque el par
-#                           usuario/contraseña que el test tiene fijo ya no es
-#                           válido (hallazgo H-06). Es un problema de datos, no de
-#                           producto, y la estrategia declara el login fuera de
-#                           alcance. Incluirlo dejaría el CI rojo por algo ajeno al
-#                           proyecto; corregirlo sería ampliar el alcance sin decirlo.
-#
-#   tests/registro.spec.ts  Smoke de visibilidad heredado del curso. Su cobertura ya
-#                           está contenida en los casos CP-01 a CP-06 de tests/e2e/.
+# Corre 43 tests: 30 E2E de registro, 11 de contrato de API y 1 flujo integrado,
+# más el smoke de entorno. El repositorio ya no contiene tests ajenos al proyecto,
+# así que el CI cubre el 100% de lo que hay.
 #
 # Ocho tests de la suite llevan test.fail() contra defectos confirmados contra la
 # especificación. No están silenciados: corren, ejecutan sus aserciones, y Playwright
