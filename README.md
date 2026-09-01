@@ -14,24 +14,33 @@ sale de ahí.
 
 ## Por qué el oráculo es el centro de este proyecto
 
-La captura de los once estados del formulario mostró esto:
+Probar las mismas reglas por UI y después contra la API directa mostró esto:
 
-> **Toda la validación que funciona vive en el cliente.** Nueve de los once rechazos
-> ocurren sin emitir una sola petición a `POST /api/register`. Y las dos reglas que
-> el cliente no implementa —el tope de 64 caracteres de la contraseña y el punto
-> obligatorio en el dominio del email— **no las aplica nadie**: el servidor las
-> acepta con `201` y crea la cuenta.
+> **Cliente y servidor validan igual, y comparten exactamente los mismos dos huecos.**
+> El formulario bloquea nueve de once entradas inválidas sin emitir petición. Llamada
+> directamente, `POST /api/register` rechaza esas mismas reglas con `422` y **con los
+> mensajes idénticos**. Pero de dos reglas compuestas solo se implementó una condición
+> de cada una, y el error está replicado en las dos capas.
 
-No hay una segunda línea de defensa. Lo que el formulario deja pasar, entra.
+| Requisito | Condición implementada | Condición faltante |
+|---|---|---|
+| REQ-R04 · contraseña de 8 a 64 | mínimo de 8 → `422` | **máximo de 64** → `201`, cuenta creada |
+| REQ-R03 · `@` y dominio con punto | presencia de `@` → `422` | **dominio con punto** → `201`, cuenta creada |
 
-Eso tiene una consecuencia que va más allá de los bugs: **que la pantalla te frene
-no significa que el sistema aplique la regla.** Un caso firmado leyendo solo lo
-visible confunde una cosa con la otra, y da por probado algo que nunca se probó.
+No falta una capa de defensa: la segunda existe y tiene el mismo agujero que la
+primera. Que los mensajes coincidan carácter por carácter apunta a una **regla mal
+escrita una sola vez y usada dos veces**.
+
+Y eso solo se ve probando en las dos capas. Por UI parecía que el backend no validaba
+nada; por API sola no se habría visto que el formulario replica el mismo error. **Cada
+capa, por separado, contaba una historia equivocada.**
 
 Por eso el proyecto no arranca con casos. Arranca declarando contra qué se firma.
 
-Evidencia en [`evidence/`](evidence) — un archivo por estado más el código de estado
-de cada uno. Reproducible con `node tools/capturar-evidencia.js evidence`.
+Evidencia en [`evidence/`](evidence), reproducible con
+`node tools/capturar-evidencia.js evidence`, y en
+[`docs/qa/bitacora-de-hallazgos.md`](docs/qa/bitacora-de-hallazgos.md) con el código de
+estado de cada regla.
 
 ### La regla de oráculo
 

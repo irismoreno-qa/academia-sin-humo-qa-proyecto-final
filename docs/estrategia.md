@@ -23,15 +23,21 @@ sección 1. El resultado esperado de cada caso se deriva de la especificación,
 Esta regla no es teórica, y la evidencia de `evidence/` la sostiene por un motivo
 más grave que el que se suponía al escribirla por primera vez:
 
-> **Toda la validación que funciona vive en el cliente.** De los once estados
-> capturados, los nueve rechazos ocurrieron **sin emitir una sola petición** a
-> `POST /api/register`. Y las dos reglas que el cliente no implementa —el tope de 64
-> caracteres de la contraseña y el punto obligatorio en el dominio del email— **no
-> las aplica nadie**: el servidor las acepta con `201`.
+> **Cliente y servidor implementan la misma validación, y comparten exactamente los
+> mismos dos huecos.** El formulario bloquea nueve de once estados sin emitir
+> petición. Llamada directamente, `POST /api/register` rechaza esas mismas reglas con
+> `422` y **con los mensajes de error idénticos**. Pero las dos reglas que el cliente
+> no implementa —el tope de 64 caracteres de la contraseña y la estructura del
+> dominio del email— el servidor tampoco las aplica: las acepta con `201`.
 
-Consecuencia directa: que la pantalla rechace una entrada no dice nada sobre lo que
-el servidor haría con esa misma entrada, y que la pantalla no muestre un error no
-significa que la cuenta no se haya creado. Por lo tanto:
+No falta una capa de defensa: **la segunda capa existe y tiene el mismo agujero que
+la primera.** Que las dos fallen en los mismos dos puntos, con los mismos mensajes en
+el resto, apunta a una definición de validación compartida a la que le faltan esas
+dos condiciones — no a un olvido en el backend.
+
+Consecuencia directa: que la pantalla rechace una entrada no prueba por sí solo que el
+servidor haga lo mismo, y que la pantalla no muestre un error no significa que la
+cuenta no se haya creado. Por lo tanto:
 
 - Un caso firmado leyendo solo la pantalla es un caso **no verificado**.
 - El oráculo de nivel 1 es **si la cuenta se creó o no**, evidenciado por el código
@@ -100,16 +106,22 @@ matrículas de forma silenciosa y acumula registros con datos fuera de rango
 (nombres vacíos o de 200 caracteres, emails a los que nunca va a llegar un mail,
 edades imposibles).
 
-**Patrón de riesgo concreto, confirmado con evidencia:** la validación no está en dos
-lugares. Está **solo en el cliente**. El servidor acepta todo lo que el formulario
-deja pasar, y las dos reglas que el formulario no implementa quedan sin aplicar en
-todo el sistema: una contraseña de 65 caracteres y un email con dominio sin punto se
-registran con `201`.
+**Patrón de riesgo concreto, confirmado en las dos capas:** la validación existe en
+el cliente **y** en el servidor, con los mismos mensajes. Lo que falla no es una capa
+ausente, sino **una regla incompleta replicada fielmente en ambas**.
 
-No son tres defectos sueltos: son **tres síntomas de un mismo defecto de
-arquitectura**, y ahí se concentra el diseño de casos. La consecuencia práctica es
-que la superficie real de riesgo no son las reglas que el formulario verifica, sino
-las que no verifica — porque detrás no hay una segunda línea de defensa.
+De las dos reglas de dos condiciones, solo se implementó una condición de cada una:
+
+| Requisito | Condición implementada | Condición faltante |
+|---|---|---|
+| REQ-R04 · contraseña 8–64 | Mínimo de 8 → `422` en ambas capas | **Máximo de 64** → `201` en ambas |
+| REQ-R03 · `@` y dominio con punto | Presencia de `@` → `422` en ambas capas | **Dominio con punto** → `201` en ambas |
+
+Esa es la superficie real de riesgo, y es más estrecha y más precisa de lo que
+parecía: no hay que desconfiar de toda la validación, hay que desconfiar de **las
+reglas compuestas**, donde se implementó la primera condición y se olvidó la
+segunda. REQ-R05, con dos bordes numéricos, sí está completa en las dos capas — lo
+que descarta que sea un problema general de reglas con rango.
 
 ### Riesgo cuantificado por requisito
 
@@ -250,8 +262,22 @@ observa durante los casos de R01 y R04, sin ejecuciones adicionales.
    El compromiso dice **30 y no "los que se pueda"** a propósito: un criterio de
    salida que admite excepciones sin nombrarlas nunca se puede incumplir, y por lo
    tanto nunca se puede verificar.
-4. **Suite corriendo en CI**, ampliando el smoke actual de `tests/ci/`.
-5. **Reporte de bugs** con los hallazgos reales, cada uno con su evidencia.
+4. **Suite de API contra `POST /api/register`** — 11 tests llamando al endpoint sin
+   pasar por el formulario, para verificar si el servidor aplica las reglas que el
+   cliente bloquea.
+
+   **Desviación declarada.** La consigna prescribe `POST /api/enroll` para esta capa.
+   Se eligió `/api/register` porque cerraba la limitación más grande que esta misma
+   estrategia declaraba por escrito: cuando el formulario impide el envío, la petición
+   que probaría al servidor nunca se emite. Ir a `/api/enroll` habría agregado un flujo
+   nuevo dejando abierto el hueco más grande del flujo elegido. El dominio de
+   inscripción se cubre igual, en el flujo integrado.
+
+   Los tests se priorizaron con la matriz de decisión (frecuencia × estabilidad ×
+   valor × mantenimiento). Siete de los once **descubren** —son la única forma de
+   saber si el servidor valida— y cuatro **confirman** lo ya visto por UI.
+5. **Suite corriendo en CI**, ampliando el smoke actual de `tests/ci/`.
+6. **Reporte de bugs** con los hallazgos reales, cada uno con su evidencia.
 
 ### Lo que NO entra, y por qué
 
@@ -273,14 +299,14 @@ observa durante los casos de R01 y R04, sin ejecuciones adicionales.
   listado, CV) esté libre de bugs: **no fue probado**.
 - Que el registro se comporte igual bajo concurrencia — dos personas registrando el
   mismo email al mismo tiempo no se prueba.
-- **Que el servidor aplique las reglas que el cliente bloquea.** Esta es la
-  limitación más importante de la suite y hay que leerla completa. En REQ-R01, R02 y
-  R05 el formulario impide el envío, así que **la petición que probaría al servidor
-  nunca se emite**. Estos casos demuestran que la regla existe en el cliente, no que
-  exista en el sistema. Y con R03 y R04 ya demostrando que el servidor acepta lo que
-  el cliente deja pasar, la sospecha es concreta: es probable que un `POST` directo
-  con un nombre de 51 caracteres o una edad de 15 también sea aceptado. Comprobarlo
-  exige atacar la API sin pasar por el formulario, que es trabajo de otra capa.
+- **Que la API rechace entradas que la especificación no contempla.** Los casos de
+  robustez —cuerpo vacío, JSON malformado, edad no numérica— quedaron fuera del
+  mínimo a propósito: la especificación no define qué debe responder la API en esos
+  casos, así que su resultado esperado saldría de una convención de industria y no de
+  la fuente de verdad. Se descartan por la misma razón que los dos casos
+  indeterminados, no por falta de tiempo.
+- **Que los datos registrados persistan.** La verificación termina en la respuesta de
+  `POST /api/register`. Que el `201` se traduzca en una fila en una base no se prueba.
 - Que los datos registrados se persistan correctamente ni que el email llegue a
   destino: la prueba termina en la respuesta de `POST /api/register`.
 - Que el formulario de registro cumpla WCAG.
