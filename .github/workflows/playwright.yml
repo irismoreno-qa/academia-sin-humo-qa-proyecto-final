@@ -1,3 +1,25 @@
+# Suite del proyecto final — Academia sin Humo
+#
+# Corre 43 tests: 30 E2E de registro, 12 de contrato de API y 1 flujo integrado.
+#
+# ALCANCE PARCIAL, DECLARADO. Dos archivos del andamiaje del curso quedan fuera a
+# propósito, y el motivo importa tanto como la exclusión:
+#
+#   tests/login.spec.ts     Falla. POST /api/login devuelve 401 porque el par
+#                           usuario/contraseña que el test tiene fijo ya no es
+#                           válido (hallazgo H-06). Es un problema de datos, no de
+#                           producto, y la estrategia declara el login fuera de
+#                           alcance. Incluirlo dejaría el CI rojo por algo ajeno al
+#                           proyecto; corregirlo sería ampliar el alcance sin decirlo.
+#
+#   tests/registro.spec.ts  Smoke de visibilidad heredado del curso. Su cobertura ya
+#                           está contenida en los casos CP-01 a CP-06 de tests/e2e/.
+#
+# Ocho tests de la suite llevan test.fail() contra defectos confirmados contra la
+# especificación. No están silenciados: corren, ejecutan sus aserciones, y Playwright
+# verifica que efectivamente fallen. El día que el producto se corrija, se pondrán en
+# rojo avisando que hay que quitar la anotación.
+
 name: Playwright Tests
 
 on:
@@ -12,7 +34,7 @@ permissions:
 
 jobs:
   test:
-    name: Playwright smoke
+    name: Suite del proyecto
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -32,9 +54,27 @@ jobs:
       - name: Instalar Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Ejecutar el smoke
+      # La consigna prohíbe silenciar tests o usar esperas por tiempo fijo para
+      # forzar un verde. Este paso convierte esa prohibición en algo que el CI
+      # hace cumplir, en vez de dejarla como una buena intención en un documento.
+      - name: Verificar que no hay tests silenciados
+        run: |
+          if grep -rn "test\.skip\|\.only(\|waitForTimeout" tests/ pages/; then
+            echo "::error::Se encontraron tests silenciados o esperas por tiempo fijo."
+            exit 1
+          fi
+          echo "Sin skip, sin only, sin waitForTimeout."
+
+      # El smoke corre primero y a propósito: si falla, el problema es el entorno y
+      # no la suite. Separa el diagnóstico del veredicto.
+      - name: Comprobar el entorno
         run: npx playwright test tests/ci/ci-smoke.spec.ts --project=chromium
 
+      - name: Ejecutar la suite del proyecto
+        run: npx playwright test tests/e2e tests/api tests/integrado --project=chromium
+
+      # if: !cancelled() para que el reporte suba también cuando la suite falla,
+      # que es justo cuando hace falta mirarlo.
       - name: Guardar el reporte de Playwright
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
