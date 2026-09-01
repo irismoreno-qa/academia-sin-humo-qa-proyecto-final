@@ -16,24 +16,36 @@ sección 1. El resultado esperado de cada caso se deriva de la especificación,
 
 | Nivel | Fuente | Uso |
 |---|---|---|
-| 1 — Oráculo primario | Respuesta real de `POST /api/register`: código de estado + body | Es lo que decide PASA / FALLA |
+| 1 — Oráculo primario | **Si la cuenta se creó o no**: el código de estado de `POST /api/register`, o la **ausencia** de petición cuando el cliente bloquea | Es lo que decide PASA / FALLA |
 | 2 — Aserto secundario | Mensaje o estado visible en la UI | Se afirma **además** del nivel 1, nunca en su lugar |
 | 3 — No es oráculo | El texto de error de la propia app | No se usa jamás para derivar un resultado esperado |
 
-Esta regla no es teórica. En esta aplicación está confirmado que la pantalla puede
-mostrar *"¡Registro exitoso! Tu cuenta ha sido creada."* mientras la API responde
-`422`. Por lo tanto:
+Esta regla no es teórica, y la evidencia de `evidence/` la sostiene por un motivo
+más grave que el que se suponía al escribirla por primera vez:
+
+> **Toda la validación que funciona vive en el cliente.** De los once estados
+> capturados, los nueve rechazos ocurrieron **sin emitir una sola petición** a
+> `POST /api/register`. Y las dos reglas que el cliente no implementa —el tope de 64
+> caracteres de la contraseña y el punto obligatorio en el dominio del email— **no
+> las aplica nadie**: el servidor las acepta con `201`.
+
+Consecuencia directa: que la pantalla rechace una entrada no dice nada sobre lo que
+el servidor haría con esa misma entrada, y que la pantalla no muestre un error no
+significa que la cuenta no se haya creado. Por lo tanto:
 
 - Un caso firmado leyendo solo la pantalla es un caso **no verificado**.
-- Si un caso no puede citar la respuesta real de la API, no se marca PASA: se marca
-  *no verificado* y queda pendiente.
+- El oráculo de nivel 1 es **si la cuenta se creó o no**, evidenciado por el código
+  de estado de `POST /api/register` o por la **ausencia** de petición. Las dos
+  lecturas son verificables y auditables; una suposición no lo es.
 - El nivel 3 está prohibido explícitamente porque es circular: derivar el resultado
   esperado del mensaje que muestra la app equivale a decidir que la app nunca puede
   estar equivocada.
 
-**Excepción declarada:** REQ-R01 espera bloqueo del lado del cliente. En esos casos
-el oráculo primario es la **ausencia** de petición en Network, verificable y
-auditable igual que un código de estado.
+**Bloqueo del lado del cliente.** No es una excepción de REQ-R01: es el
+comportamiento observado en REQ-R01 a R05. Cuando el cliente bloquea, el oráculo es
+la ausencia de petición — y el caso queda declarado como **verificado únicamente en
+la capa de cliente**. Que el servidor aplique esa misma regla no queda demostrado,
+y con la evidencia disponible hay motivos para dudar de que lo haga.
 
 ### Regla de aislamiento de variable
 
@@ -88,10 +100,16 @@ matrículas de forma silenciosa y acumula registros con datos fuera de rango
 (nombres vacíos o de 200 caracteres, emails a los que nunca va a llegar un mail,
 edades imposibles).
 
-**Patrón de riesgo concreto:** la especificación describe reglas que se validan en
-**dos lugares** —el formulario en el cliente y `POST /api/register` en el servidor—
-y no exige que coincidan salvo implícitamente. **Ahí es donde este producto ya
-demostró romperse**, y ahí se concentra el diseño de casos.
+**Patrón de riesgo concreto, confirmado con evidencia:** la validación no está en dos
+lugares. Está **solo en el cliente**. El servidor acepta todo lo que el formulario
+deja pasar, y las dos reglas que el formulario no implementa quedan sin aplicar en
+todo el sistema: una contraseña de 65 caracteres y un email con dominio sin punto se
+registran con `201`.
+
+No son tres defectos sueltos: son **tres síntomas de un mismo defecto de
+arquitectura**, y ahí se concentra el diseño de casos. La consecuencia práctica es
+que la superficie real de riesgo no son las reglas que el formulario verifica, sino
+las que no verifica — porque detrás no hay una segunda línea de defensa.
 
 ### Riesgo cuantificado por requisito
 
@@ -102,16 +120,24 @@ propiedades estructurales de la regla, nunca en corazonada.
 
 | REQ | Impacto | Por qué ese impacto | Prob. | Por qué esa probabilidad | Score | Banda |
 |---|:--:|---|:--:|---|:--:|---|
-| **R08** · coherencia UI/API | 5 | Se le informa al aspirante que tiene cuenta cuando no la tiene. Es el único caso en que **no tiene forma de enterarse** de que algo falló: no reintenta, se pierde | 5 | Observado directamente: pantalla de éxito con `422` de la API | **25** | **CRÍTICO** |
-| **R03** · formato de email | 4 | Cuenta a la que nunca llega un correo. Irrecuperable sin soporte | 5 | Dos condiciones acopladas (`@` **y** punto en el dominio). Se observó un dominio sin punto aceptado con `201` | **20** | **CRÍTICO** |
-| **R06** · limpieza del formulario | 3 | Riesgo de registro duplicado accidental; en una máquina compartida, el siguiente aspirante ve nombre y email del anterior | 5 | Observado fallando de forma repetida, incluso tras registros confirmados genuinos por la API. Las post-condiciones son las reglas que más se omiten | **15** | **CRÍTICO** |
-| **R02** · nombre 2–50 | 3 | Nombres de 1 o de 200 caracteres en los registros. Daño de calidad de dato; el nombre se imprime en el certificado | 4 | Dos bordes, doble implementación cliente/servidor, y el borde superior nunca fue verificado | **12** | ALTO |
-| **R04** · contraseña 8–64 | 4 | Contraseña rechazada con pantalla de éxito: el estudiante no puede entrar y no sabe por qué. Pérdida silenciosa de acceso | 3 | Dos bordes y doble implementación, pero la observación disponible indica que el servidor **sí** aplicó el límite. Lo que falló fue el reporte, y eso pertenece a R08 | **12** | ALTO |
-| **R05** · edad 16–99 | 4 | Menores registrados en la academia. Tiene arista legal | 3 | Dos bordes, doble implementación, campo numérico estándar. Sin señal adversa observada | **12** | ALTO |
-| **R07** · email duplicado | 4 | Cuentas duplicadas rompen la identidad: dos estudiantes con un email, y el sistema no los distingue para login, progreso ni certificados | 2 | Condición única. La unicidad suele aplicarse con restricción en base de datos. Se observó funcionando | **8** | MEDIO |
-| **R01** · campos obligatorios | 2 | El aspirante ve el error y reintenta | 2 | Una condición por campo (no vacío), la validación más estándar que existe, y bloquea del lado del cliente | **4** | BAJO |
+| **R04** · contraseña 8–64 | 4 | Contraseña fuera de rango aceptada sin aviso. El estudiante queda con una credencial que la spec no admite, y la academia con datos que declaró inválidos | 5 | **Defecto confirmado.** Una contraseña de 65 caracteres se registró con `201`; la spec exige rechazarla de forma explícita | **20** | **CRÍTICO** |
+| **R03** · formato de email | 4 | Cuenta a la que nunca llega un correo. Irrecuperable sin soporte | 5 | **Defecto confirmado.** `irismoreno@gmail` se registró con `201`. La regla tiene dos condiciones y solo se implementó la del `@` | **20** | **CRÍTICO** |
+| **R06** · limpieza del formulario | 3 | Riesgo de registro duplicado accidental; en una máquina compartida, el siguiente aspirante ve nombre y email del anterior | 5 | **Defecto confirmado.** Tras un `201`, los cuatro campos conservan sus valores | **15** | **CRÍTICO** |
+| **R08** · coherencia UI/API | 5 | Se le informaría al aspirante que tiene cuenta cuando no la tiene: el único caso en que **no tiene forma de enterarse** de que algo falló | 2 | **Sin divergencia observada** en los once estados capturados: UI y API coinciden siempre. El riesgo es estructural, no observado | **10** | ALTO |
+| **R05** · edad 16–99 | 4 | Menores registrados en la academia. Tiene arista legal | 2 | Los cuatro valores límite se comportan según la spec. Bloqueo de cliente en 15 y en 100 | **8** | MEDIO |
+| **R07** · email duplicado | 4 | Cuentas duplicadas rompen la identidad: dos estudiantes con un email, y el sistema no los distingue para login, progreso ni certificados | 2 | Verificado funcionando: el reintento devuelve `422` y el mensaje correcto | **8** | MEDIO |
+| **R02** · nombre 2–50 | 3 | Nombres de 1 o de 200 caracteres en los registros. Daño de calidad de dato; el nombre se imprime en el certificado | 2 | Ambos bordes verificados: 1 y 51 caracteres se bloquean en el cliente con el mensaje correcto | **6** | MEDIO |
+| **R01** · campos obligatorios | 2 | El aspirante ve el error y reintenta | 2 | Verificado funcionando: los cuatro campos vacíos producen sus cuatro mensajes y ninguna petición | **4** | BAJO |
 
 Bandas: **CRÍTICO** 15–25 · **ALTO** 10–14 · **MEDIO** 5–9 · **BAJO** 1–4
+
+**Caveat que atraviesa toda la tabla.** Las probabilidades de R01, R02 y R05 bajaron
+porque el cliente bloquea correctamente. Eso demuestra que la regla se aplica **en la
+capa de cliente**, no que se aplique en el servidor: nunca se emitió la petición que
+lo probaría. Y dado que R03 y R04 demuestran que el servidor no valida lo que el
+cliente deja pasar, **hay motivos concretos para sospechar que tampoco validaría
+esto**. Verificarlo exige atacar `POST /api/register` directamente, que es trabajo de
+capa API y no de esta suite. Queda declarado en la sección 5.
 
 ### Cobertura frente a riesgo: una desproporción aceptada
 
@@ -120,25 +146,31 @@ la distribución no es proporcional al riesgo:
 
 | REQ | Score | Casos | |
 |---|:--:|:--:|---|
-| R08 | 25 | 2 | el riesgo más alto, la menor cobertura |
-| R03 | 20 | 5 | proporcional |
-| R06 | 15 | 3 | proporcional |
-| R02 · R04 · R05 | 12 | 4 c/u | proporcional |
+| R04 | 20 | 4 | proporcional — defecto confirmado |
+| R03 | 20 | 5 | proporcional — defecto confirmado |
+| R06 | 15 | 3 | proporcional — defecto confirmado |
+| R08 | 10 | 2 | proporcional |
+| R05 | 8 | 4 | levemente alta |
 | R07 | 8 | 3 | proporcional |
-| R01 | 4 | 7 | el riesgo más bajo, la mayor cobertura |
+| R02 | 6 | 4 | levemente alta |
+| R01 | 4 | 7 | **el riesgo más bajo, la mayor cobertura** |
 
-Se acepta la desproporción, con motivo en cada extremo:
+Los tres requisitos críticos concentran 12 de los 32 casos, y los tres tienen defecto
+confirmado. La distribución quedó alineada con el riesgo, con una sola excepción que
+se acepta con motivo:
 
-- **R01 con 7 casos.** El riesgo es bajo pero el costo también: no llegan a la API,
-  no consumen emails y corren de inmediato. La regla de aislamiento exige un caso por
-  campo, y quitarlos ahorraría minutos sin reducir riesgo real.
-- **R08 con 2 casos.** Sus dos casos cubren las dos direcciones de la regla —la API
-  rechaza y la pantalla no miente; la API acepta y la pantalla lo informa— y no
-  requieren ejecuciones adicionales: se observan durante `TC-R04-004` y `TC-R01-006`.
-  La regla queda cubierta en su lógica completa, no por volumen.
+- **R01 con 7 casos sobre un riesgo de 4.** El riesgo es bajo pero el costo también:
+  no llegan a la API, no consumen emails y corren de inmediato. La regla de
+  aislamiento exige un caso por campo, y quitarlos ahorraría minutos sin reducir
+  riesgo real.
+
+**R02 y R05 quedan levemente sobrecubiertos a propósito.** Sus scores bajaron porque
+el cliente los bloquea bien, pero esa verificación no alcanza al servidor. Mantener
+los cuatro valores límite deja el set listo para reejecutarse contra la API el día
+que se pruebe esa capa, sin rediseñar nada.
 
 Queda declarado como decisión y no como accidente: sin puntuar el riesgo, esta
-desproporción no se ve.
+distribución no se ve.
 
 ---
 
@@ -169,13 +201,13 @@ razonamiento de cada puntuación vive allí y no se repite acá.
 | REQ | Regla | Técnica de diseño | Clases / valores a cubrir | Oráculo | Riesgo |
 |---|---|---|---|---|---|
 | **R01** | 4 campos obligatorios | Partición de equivalencia | Cada campo vacío **aislado** (4 casos) + los 4 vacíos a la vez (1) | Ausencia de petición a la API + mensaje visible | BAJO · 4 |
-| **R02** | Nombre entre 2 y 50 caracteres | Valores límite | 1, 2, 50, 51 | Respuesta de la API | ALTO · 12 |
+| **R02** | Nombre entre 2 y 50 caracteres | Valores límite | 1, 2, 50, 51 | Respuesta de la API | MEDIO · 6 |
 | **R03** | Email con `@` **y** dominio con punto | Partición de equivalencia | Válidos: `a@b.com`, `a@b.co` · Inválidos: `usuario` (sin `@`), `usuario@` (sin dominio), `usuario@dominio` (dominio sin punto) | Respuesta de la API | **CRÍTICO · 20** |
-| **R04** | Contraseña entre 8 y 64 (inclusive) | Valores límite | 7, 8, 64, 65 | **API obligatorio** | ALTO · 12 |
-| **R05** | Edad entre 16 y 99 (inclusive) | Valores límite | 15, 16, 99, 100 | Respuesta de la API | ALTO · 12 |
+| **R04** | Contraseña entre 8 y 64 (inclusive) | Valores límite | 7, 8, 64, 65 | **API obligatorio** | **CRÍTICO · 20** |
+| **R05** | Edad entre 16 y 99 (inclusive) | Valores límite | 15, 16, 99, 100 | Respuesta de la API | MEDIO · 8 |
 | **R06** | El formulario se limpia tras un registro exitoso | Verificación de post-condición | 1 registro válido → los 4 campos vacíos, y sin arrastre entre dos registros consecutivos | UI, **después** de confirmar el éxito real por API | **CRÍTICO · 15** |
 | **R07** | No se admite un email ya existente | Partición de equivalencia | Email registrado en la misma corrida, reenviado | Respuesta de la API | MEDIO · 8 |
-| **R08** *(derivado)* | El resultado informado en pantalla coincide con el resultado real del registro | Consistencia entre capas | Un rechazo de la API y una aceptación de la API, comparando ambas contra lo que muestra la pantalla | Respuesta de la API **contra** mensaje visible | **CRÍTICO · 25** |
+| **R08** *(derivado)* | El resultado informado en pantalla coincide con el resultado real del registro | Consistencia entre capas | Un rechazo de la API y una aceptación de la API, comparando ambas contra lo que muestra la pantalla | Respuesta de la API **contra** mensaje visible | ALTO · 10 |
 
 **Total mínimo: 24 casos**, todos con una sola variable bajo prueba.
 Dos técnicas de diseño aplicadas y trazadas: **valores límite** (R02, R04, R05) y
@@ -241,9 +273,14 @@ observa durante los casos de R01 y R04, sin ejecuciones adicionales.
   listado, CV) esté libre de bugs: **no fue probado**.
 - Que el registro se comporte igual bajo concurrencia — dos personas registrando el
   mismo email al mismo tiempo no se prueba.
-- Que el backend valide **exactamente** lo mismo que el frontend en todos los
-  campos: se verifica la respuesta real de la API por caso, lo que detecta la
-  divergencia cuando aparece, pero no se audita el código de validación.
+- **Que el servidor aplique las reglas que el cliente bloquea.** Esta es la
+  limitación más importante de la suite y hay que leerla completa. En REQ-R01, R02 y
+  R05 el formulario impide el envío, así que **la petición que probaría al servidor
+  nunca se emite**. Estos casos demuestran que la regla existe en el cliente, no que
+  exista en el sistema. Y con R03 y R04 ya demostrando que el servidor acepta lo que
+  el cliente deja pasar, la sospecha es concreta: es probable que un `POST` directo
+  con un nombre de 51 caracteres o una edad de 15 también sea aceptado. Comprobarlo
+  exige atacar la API sin pasar por el formulario, que es trabajo de otra capa.
 - Que los datos registrados se persistan correctamente ni que el email llegue a
   destino: la prueba termina en la respuesta de `POST /api/register`.
 - Que el formulario de registro cumpla WCAG.
@@ -264,6 +301,42 @@ observa durante los casos de R01 y R04, sin ejecuciones adicionales.
 - **Sin acceso a los datos registrados:** no hay forma de consultar si un usuario
   quedó realmente creado más allá de lo que devuelve la API. La verificación termina
   en la respuesta, no en la base.
+
+---
+
+## Nota de corrección — 2026-09-01
+
+Esta estrategia se escribió **antes** de tener evidencia de ejecución, y la primera
+captura la contradijo en un punto central. Queda registrado porque la corrección
+importa tanto como el documento.
+
+**Lo que afirmaba:** que estaba *confirmado* que la pantalla podía mostrar
+"¡Registro exitoso!" mientras la API respondía `422`. Esa afirmación venía de un
+documento de casos anterior cuya evidencia resultó no auditable, y se arrastró como
+si fuera un hecho establecido.
+
+**Lo que muestra la evidencia:** en los once estados capturados, UI y API **coinciden
+siempre**. La divergencia nunca se observó. El defecto real es distinto y más grave:
+la validación vive solo en el cliente, y las dos reglas que el cliente no implementa
+no las aplica nadie.
+
+**Qué cambió como consecuencia:**
+
+| Elemento | Antes | Ahora |
+|---|---|---|
+| Justificación de la regla de oráculo | Divergencia UI/API observada | Validación únicamente en cliente, servidor permisivo |
+| Oráculo de nivel 1 | La respuesta de la API | Si la cuenta se creó: código de estado **o** ausencia de petición |
+| R08 · coherencia UI/API | CRÍTICO · 25 (probabilidad 5, "observado") | ALTO · 10 (probabilidad 2, sin divergencia observada) |
+| R04 · contraseña | ALTO · 12 | **CRÍTICO · 20** — defecto confirmado |
+| R03 · email | CRÍTICO · 20 (por acoplamiento) | **CRÍTICO · 20** — defecto confirmado |
+| R02 y R05 | ALTO · 12 | MEDIO · 6 y 8 — ambos bordes verificados en cliente |
+
+La bibliografía de riesgo lo advierte: *un modelo creado una vez y nunca actualizado
+produce falsa confianza*. Pasó exactamente eso con este modelo, y por eso la
+reevaluación al cerrar cada fase de ejecución no es opcional.
+
+**Evidencia:** `evidence/` — un archivo HTML por estado más `_resumen.json` con el
+código de estado de cada uno. Reproducible con `node tools/capturar-evidencia.js evidence`.
 
 ---
 
