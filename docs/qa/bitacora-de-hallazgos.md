@@ -142,6 +142,56 @@ esos dos puntos.
 
 ---
 
+## Corrida 4 · Flujo integrado API → UI — 2026-09-01
+
+`npx playwright test tests/integrado/inscripcion.spec.ts`
+
+| ID | Tipo | Esperado (según la spec) | Observado | Código |
+|---|---|---|---|---|
+| **H-07** | `DEFECTO` | REQ-C04 — *"Al inscribirse exitosamente, el número de cupos disponibles debe reducirse en 1."* | `GET /api/courses` informa `enrolled: 24` **antes y después** de una inscripción exitosa. El cupo no se mueve | `200` |
+| **H-08** | `DEFECTO` | REQ-S01 — las páginas protegidas requieren autenticación; un usuario autenticado debe poder verlas | Con sesión válida, `/mi-progreso` muestra *"Necesitas iniciar sesión para acceder a esta página"*. Ocurre también tras un login por formulario | `200` en login |
+| **H-09** | `NO ES DEFECTO` | REQ-A03 — contrato de `POST /api/enroll` | `200`/`inscrito`, `400` sin `courseId`, `404` curso inexistente. **Los tres coinciden con la especificación** | `200`/`400`/`404` |
+| **H-10** | `NO ES DEFECTO` | REQ-L04 — *"el sistema muestra un mensaje de bienvenida con el nombre del usuario"* | *"👋 ¡Hola, Iris! Has iniciado sesión correctamente."* Se cumple | `200` |
+
+### H-08 caracteriza el bug de sesión mejor que la pista del curso
+
+La consigna anticipaba que *"la sesión no sobrevive una recarga de página"*. Es cierto, pero
+incompleto y el matiz cambia el diagnóstico:
+
+```
+POST /api/login          → 200 · crea la cookie ash_session
+POST /api/enroll         → 200 · LA API HONRA ESA COOKIE, la inscripción se crea
+GET  /api/progress       → 200 · devuelve la inscripción del usuario
+GET  /api/auth/me        → {"realUser": null}
+UI en /mi-progreso       → muro de login
+```
+
+**La sesión no está rota: está sin resolver.** Los datos existen y la API los devuelve
+correctamente para ese usuario. Lo que falla es `/api/auth/me`, que no traduce la cookie a una
+identidad — y la UI depende de ese endpoint para saber quién es el visitante.
+
+Por eso toda página protegida trata al estudiante como anónimo aunque acabe de ver
+*"¡Hola, Iris!"* en pantalla. **El estado se preserva; lo que se pierde es la identidad.**
+
+Verificado en las dos direcciones: sesión creada por API y sesión creada por formulario. El
+resultado es el mismo, así que no es un problema del puente entre capas.
+
+### Hallazgo sobre la propia automatización, por segunda vez
+
+La primera versión del test integrado tenía una aserción negativa —`toBeHidden()` sobre el muro
+de login— evaluada **antes de que la página terminara de hidratar**. Pasaba en vacío sobre un
+elemento que todavía no existía, igual que en la Corrida 2.
+
+Se detectó recién al ejecutar el test **sin** su anotación `test.fail()` para comprobar dónde
+fallaba de verdad: fallaba en la aserción siguiente, no en esta. Con la anotación puesta, un
+test que falla por el motivo equivocado se reporta igual como pasado.
+
+**De ahí sale una regla de método:** un test anotado con `test.fail()` debe verificarse una vez
+sin la anotación, para confirmar que falla donde se espera. Si no, `test.fail()` deja de
+documentar un defecto y pasa a esconder cualquier cosa.
+
+---
+
 ## Notas
 
 **H-01, H-02 y H-05 comparten causa.** No es una capa de validación ausente: la
@@ -183,9 +233,9 @@ aprobados ni fallidos.
 | | |
 |---|---|
 | Casos automatizados y ejecutados | **30 / 32** — CP-07 y CP-30 quedan fuera por indeterminados |
-| Hallazgos `DEFECTO` | 4 — reducibles a 2 defectos raíz |
+| Hallazgos `DEFECTO` | 6 — reducibles a 4 defectos raíz |
 | Hallazgos `PREGUNTA ABIERTA` | 0 |
-| Hallazgos `NO ES DEFECTO` | 2 |
+| Hallazgos `NO ES DEFECTO` | 4 |
 | Casos sin verificar (sin código de estado citable) | 0 |
 
 La última fila es la que importa: un caso sin código de estado citable —o sin la
