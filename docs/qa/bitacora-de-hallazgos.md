@@ -94,14 +94,62 @@ oráculo se verifica *después* de una señal determinista y nunca antes.
 
 ---
 
+## Corrida 3 · Suite de API directa — 2026-09-01
+
+`npx playwright test tests/api/registro-api.spec.ts` · 11 tests llamando a
+`POST /api/register` sin pasar por el formulario. **9 rechazos correctos, 2 defectos.**
+
+| Regla probada directamente contra la API | Status | Cuerpo |
+|---|:--:|---|
+| REQ-R01 · sin el campo `name` | `422` | `{"errors":{"name":"El nombre es obligatorio"}}` |
+| REQ-R02 · nombre de 1 carácter | `422` | `{"errors":{"name":"El nombre debe tener entre 2 y 50 caracteres"}}` |
+| REQ-R02 · nombre de 51 caracteres | `422` | idéntico al anterior |
+| REQ-R04 · contraseña de 7 | `422` | `{"errors":{"password":"La contraseña debe tener al menos 8 caracteres"}}` |
+| **REQ-R04 · contraseña de 65** | **`201`** | **cuenta creada — H-01 confirmado en servidor** |
+| REQ-R05 · edad 15 | `422` | `{"errors":{"age":"Debes tener al menos 16 años"}}` |
+| REQ-R05 · edad 100 | `422` | `{"errors":{"age":"La edad máxima es 99"}}` |
+| REQ-R03 · email sin `@` | `422` | `{"errors":{"email":"El email no tiene un formato válido"}}` |
+| **REQ-R03 · email sin punto** | **`201`** | **cuenta creada — H-02 confirmado en servidor** |
+| **REQ-R03 · email sin dominio** | **`201`** | **cuenta creada — H-05 confirmado en servidor** |
+| REQ-R07 · email duplicado | `422` | rechazo correcto |
+
+### Esto corrige la hipótesis central del proyecto, por segunda vez
+
+**Lo que la Corrida 1 hizo suponer:** que toda la validación vivía en el cliente y
+que el servidor aceptaba lo que el formulario dejara pasar. Era una inferencia
+razonable sobre evidencia de UI — pero la evidencia de UI **solo puede ver el
+cliente**. Nueve rechazos sin petición no dicen nada sobre el servidor.
+
+**Lo que muestran estos tests:** el servidor valida, y valida bien. Rechaza con `422`
+y **con los mensajes de error idénticos** a los del formulario. La segunda capa de
+defensa existe.
+
+**El defecto real, ahora preciso:** de las dos reglas compuestas, solo se implementó
+una condición de cada una, y el error está replicado igual en ambas capas.
+
+| Requisito | Condición implementada | Condición faltante |
+|---|---|---|
+| REQ-R04 · contraseña 8–64 | mínimo de 8 | **máximo de 64** |
+| REQ-R03 · `@` y dominio con punto | presencia de `@` | **dominio con punto** |
+
+Que los mensajes coincidan carácter por carácter entre cliente y servidor apunta a
+una definición de validación compartida a la que le faltan esas dos condiciones. **No
+es un olvido del backend: es una regla mal escrita una sola vez y usada dos veces.**
+
+REQ-R05, que también tiene dos bordes numéricos, está **completa** en ambas capas.
+Eso descarta que sea un problema general con las reglas de rango y acota el defecto a
+esos dos puntos.
+
+---
+
 ## Notas
 
-**H-01 y H-02 comparten causa, y H-03 la acompaña.** Los nueve rechazos observados
-ocurrieron **sin emitir petición**: toda la validación que funciona vive en el
-cliente. Las dos reglas que el cliente no implementa —el tope de contraseña y el
-punto del dominio— no las aplica nadie, porque detrás no hay una segunda línea de
-defensa. No son tres defectos independientes: son tres síntomas de un mismo defecto
-de arquitectura, y así deberían reportarse en la Fase 6.
+**H-01, H-02 y H-05 comparten causa.** No es una capa de validación ausente: la
+Corrida 3 probó que el servidor valida y rechaza con los mismos mensajes que la UI.
+Son **dos reglas compuestas a las que les falta su segunda condición**, replicadas
+igual en cliente y servidor. Los tres hallazgos van juntos al reporte de bugs como un
+solo defecto con tres manifestaciones. H-03, en cambio, es independiente: la
+post-condición de REQ-R06 no se cumple y no tiene relación con las otras dos reglas.
 
 **H-01 corrige una creencia previa del proyecto.** El documento de casos invalidado
 afirmaba que una contraseña de 65 caracteres producía un `422` de la API con la
@@ -135,7 +183,7 @@ aprobados ni fallidos.
 | | |
 |---|---|
 | Casos automatizados y ejecutados | **30 / 32** — CP-07 y CP-30 quedan fuera por indeterminados |
-| Hallazgos `DEFECTO` | 4 |
+| Hallazgos `DEFECTO` | 4 — reducibles a 2 defectos raíz |
 | Hallazgos `PREGUNTA ABIERTA` | 0 |
 | Hallazgos `NO ES DEFECTO` | 2 |
 | Casos sin verificar (sin código de estado citable) | 0 |

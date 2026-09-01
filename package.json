@@ -7,7 +7,9 @@
     "test:login": "playwright test tests/login.spec.ts",
     "test:list": "playwright test tests/login.spec.ts --list --reporter=line",
     "report": "playwright show-report",
-    "test:api": "playwright test tests/api/login-api.spec.ts"
+    "test:api": "playwright test tests/api",
+    "test:e2e": "playwright test tests/e2e",
+    "test:proyecto": "playwright test tests/e2e tests/api"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

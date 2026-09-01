@@ -145,10 +145,10 @@ vivo, y que el resultado es idéntico en tres corridas consecutivas.
 ## Estado del workflow
 
 **Estado automático: CANDIDATO**
-**Decisión humana: PENDIENTE**
+**Decisión humana: ACEPTADO — 2026-09-01, Iris Moreno**
 
-Rúbrica 12/12 y exit code 0 en tres corridas consecutivas. La QA debe registrar
-`ACEPTADO` o `RECHAZADO` con motivo.
+Rúbrica 12/12 y exit code 0 en tres corridas consecutivas. El POM y la suite E2E
+quedan aceptados como base de la Fase 2.
 
 Punto que necesita decisión además de la aceptación: **`tests/registro.spec.ts`**
 —el smoke de visibilidad del andamiaje del curso— quedó fuera de `tests/e2e/` y su
